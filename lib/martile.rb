@@ -37,10 +37,10 @@ class Martile
   def numbered_list_to_html(s)
 
     s.split(/(?=\[#)/).map do |x|
-      if x.strip.length > 0 then
+      s2, remainder = [x[/\[#.*#[^\]]+\]/m], ($').to_s] if x.strip.length > 0
+      if s2 then
 
-        s, remainder = x[/\[#.*#[^\]]+\]/m], ($').to_s
-        raw_list = s[1..-2].split(/^#/).reject(&:empty?).map(&:strip)
+        raw_list = s2[1..-2].split(/^#/).reject(&:empty?).map(&:strip)
         list = "<ol>%s</ol>" % raw_list.map {|x| "<li>%s</li>" % x}.join
 
         list + remainder.to_s
