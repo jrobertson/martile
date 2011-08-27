@@ -11,7 +11,7 @@ class Martile
 
   def initialize(s)
     s2 = code_block_to_html(s)
-    s3 = numbered_list_to_html(s2)
+    s3 = ordered_list_to_html(s2)
     s4 = table_to_html(s3)      
     @to_html = s4
   end
@@ -21,11 +21,11 @@ class Martile
   def code_block_to_html(s)
 
     s.split(/(?=\n\n\s{4})/).map do |x|
-      raw_code_block = x[/\s{4}.*\s{4}[^\n]+/m]
+      raw_code_block = x[/.*\s{4}[^\n]+/m]
 
       if raw_code_block then
         code_block = "<pre><code>%s</code></pre>" % \
-          raw_code_block.lines.map(&:lstrip)[1..-1].join
+          raw_code_block.lines.map{|x| x[4..-1]}[1..-1].join
         code_block + ($').to_s
       else
         x
@@ -34,7 +34,7 @@ class Martile
 
   end
 
-  def numbered_list_to_html(s)
+  def ordered_list_to_html(s)
 
     s.split(/(?=\[#)/).map do |x|
       s2, remainder = [x[/\[#.*#[^\]]+\]/m], ($').to_s] if x.strip.length > 0
@@ -42,7 +42,6 @@ class Martile
 
         raw_list = s2[1..-2].split(/^#/).reject(&:empty?).map(&:strip)
         list = "<ol>%s</ol>" % raw_list.map {|x| "<li>%s</li>" % x}.join
-
         list + remainder.to_s
       else
         x
