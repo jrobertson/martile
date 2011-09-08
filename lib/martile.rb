@@ -52,7 +52,7 @@ class Martile
 
   def table_to_html(s)
     # create any tables
-    s.gsub!(/\[[^|]+\|[^\n]+\n\|[^\]]+\]/) do |x|
+    s.gsub!(/^\[[^|]+\|[^\n]+\n\|[^\]]+\]/) do |x|
 
       rows = x.split(/\n/).map{|x| x.split(/[\[\|\]]/).reject(&:empty?)}
 
@@ -61,7 +61,7 @@ class Martile
         rows.each do |cols|
           xml.tr do
             cols.each do |col|
-              xml.td col
+              xml.td col.gsub('<','&lt;').gsub('>','&gt;')
             end
           end
         end
