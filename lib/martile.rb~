@@ -5,6 +5,7 @@
 require 'rexle-builder'
 require 'rexle'
 
+# bug fix:  04-Aug-2012; replaced \s with a space in regex patterns
 # modified: 28-Mar-2012; Added dynarex_to_table
 # modified: 28-Aug-2011; Added escaping of HTML within a code block
 
@@ -14,7 +15,7 @@ class Martile
 
   def initialize(s)
     s2 = code_block_to_html(s)
-    s3 = ordered_list_to_html(s2)
+    s3 = ordered_list_to_html(s2)  
     s4 = dynarex_to_table(s3)      
     s5 = table_to_html(s4)      
     @to_html = s5
@@ -25,21 +26,21 @@ class Martile
   def code_block_to_html(s)
 
     b =[]
-    
-    while s =~ /^\s{4}/ do
+
+    while s =~ /^ {4}/ do
       
       a = s.lines.to_a
-      r = a.take_while{|x| x[/^(\s{4}|\n)/]}
-      
+      r = a.take_while{|x| x[/^( {4}|\n)/]}
+      exit
       if r.join.strip.length > 0 then        
         code_block = "<pre><code>%s</code></pre>" % \
-          a.shift(r.length).map{|x| x.sub(/^\s{4}/,'')}.join\
+          a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join\
           .gsub('<','&lt;').gsub('>','&gt;')
         b << code_block
         s = a.join
         i = r.length        
       else        
-        i = (s =~ /^\s{4}/)        
+        i = (s =~ /^ {4}/)        
       end
 
       b << s.slice!(0,i)

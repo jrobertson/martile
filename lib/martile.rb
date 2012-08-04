@@ -31,7 +31,7 @@ class Martile
       
       a = s.lines.to_a
       r = a.take_while{|x| x[/^( {4}|\n)/]}
-      exit
+      
       if r.join.strip.length > 0 then        
         code_block = "<pre><code>%s</code></pre>" % \
           a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join\
