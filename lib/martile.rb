@@ -5,6 +5,9 @@
 require 'rexle-builder'
 require 'rexle'
 
+
+# bug fix:  20-Sep-2012: in ordered_list_to_html it now cuts off from 
+#                        parsing headings
 # bug fix:  04-Aug-2012; replaced \s with a space in regex patterns
 # modified: 28-Mar-2012; Added dynarex_to_table
 # modified: 28-Aug-2011; Added escaping of HTML within a code block
@@ -64,7 +67,7 @@ class Martile
 
   def ordered_list_to_html(s)
 
-    s.split(/(?=\[#)/).map do |x|
+    s.split(/(?=\[#|^##)/).map do |x|
       
       s2, remainder = [x[/\[#.*#[^\]]+\]/m], ($').to_s] if x.strip.length > 0
       
