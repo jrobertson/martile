@@ -4,8 +4,10 @@
 
 require 'rexle-builder'
 require 'rexle'
+require 'dynarex'
 
-
+# bug fix:  02-Nov-2012: within dynarex_to_table URLs containing a 
+#                        dash now work
 # bug fix:  20-Sep-2012: in ordered_list_to_html it now cuts off from 
 #                        parsing headings
 # bug fix:  04-Aug-2012; replaced \s with a space in regex patterns
@@ -56,7 +58,7 @@ class Martile
   
   def dynarex_to_table(s)
 
-    s.gsub(/-\[((https?:\/\/)?[\w\/\.]+)\]/) do |match|
+    s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\]/) do |match|
       
       dynarex = Dynarex.new($1)
       dynarex.to_h.map(&:values)
