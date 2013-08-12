@@ -7,6 +7,8 @@ require 'rexle'
 require 'dynarex'
 require 'rdiscount'
 
+
+# feature:  12-Aug-2013: unordered_list supported
 # feature:  31-Mar-2013: markdown inside a martile ordered list
 #                          is now converted to HTML
 # bug fix:  02-Nov-2012: within dynarex_to_table URLs containing a 
@@ -23,10 +25,16 @@ class Martile
 
   def initialize(s)
     s2 = code_block_to_html(s)
-    s3 = ordered_list_to_html(s2)  
-    s4 = dynarex_to_table(s3)      
-    s5 = table_to_html(s4)      
-    @to_html = s5
+    
+    s3 = ordered_list_to_html(s2)
+    
+    s4 = unordered_list_to_html(s3)  
+    
+    s5 = dynarex_to_table(s4)      
+    
+    s6 = table_to_html(s5)      
+    
+    @to_html = s6
   end
 
   private
@@ -70,17 +78,20 @@ class Martile
     end
   end
 
-  def ordered_list_to_html(s)
+  def list_to_html(s,symbol='#')
 
-    s.split(/(?=\[#|^##)/).map do |x|
+    return s unless s[/\[#{symbol}[^\]]+\]/]
+    tag = {'#' => 'ol', '\*' => 'ul'}[symbol]
+
+    s.split(/(?=\[#{symbol}|^#{symbol*2})/).map do |x|
       
-      s2, remainder = [x[/\[#.*#[^\]]+\]/m], ($').to_s] if x.strip.length > 0
+      s2, remainder = [x[/\[#{symbol}.*#{symbol}[^\]]+\]/m], ($').to_s] if x.strip.length > 0
       
       if s2 then
 
-        raw_list = s2[1..-2].split(/^#/).reject(&:empty?).map(&:strip)
-        list = "<ol>%s</ol>" % raw_list.map {|x| \
-                             "<li>%s</li>" % RDiscount.new(x).to_html}.join
+        raw_list = s2[1..-2].split(/^#{symbol}/).reject(&:empty?).map(&:strip)
+        list = "<#{tag}>%s</#{tag}>" % raw_list.map {|x| \
+                    "<li>%s</li>" % RDiscount.new(x).to_html[/<p>(.*)<\/p>/,1]}.join
         list + remainder.to_s
         
       else
@@ -91,7 +102,15 @@ class Martile
       
     end.join
 
+  end  
+  
+  def ordered_list_to_html(s)
+    list_to_html s, '#'
   end
+  
+  def unordered_list_to_html(s)
+    list_to_html s, '\*'
+  end  
 
   def table_to_html(s)
     # create any tables
