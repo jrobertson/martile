@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  03-Oct-2013: HTML tags now handled
 # bug fix:  25-Sep-2013: removed the new line statement from the join command.
 #                        headings etc. should no longer be split with a new line
 # feature:  12-Aug-2013: unordered_list supported
@@ -26,16 +27,16 @@ class Martile
   attr_reader :to_html
 
   def initialize(s)
-    s2 = code_block_to_html(s)
-    puts 's2 : ' + s2.inspect
-    s3 = ordered_list_to_html(s2)
-    puts 's3 : ' + s3.inspect
-    s4 = unordered_list_to_html(s3)  
-    puts 's4 : ' + s4.inspect
-    s5 = dynarex_to_table(s4)      
-    puts 's5 :' + s5.inspect
-    s6 = table_to_html(s5)      
-    puts 's6 : ' + s6.inspect
+    s2 = filter_out_html(s, :code_block_to_html)
+    #puts 's2 : ' + s2.inspect
+    s3 = filter_out_html(s2, :ordered_list_to_html)
+    #puts 's3 : ' + s3.inspect
+    s4 = filter_out_html(s3, :unordered_list_to_html)
+    #puts 's4 : ' + s4.inspect
+    s5 = filter_out_html(s4, :dynarex_to_table)
+    #puts 's5 :' + s5.inspect
+    s6 = filter_out_html(s5, :table_to_html) 
+    #puts 's6 : ' + s6.inspect
     @to_html = s6
   end
 
@@ -105,6 +106,17 @@ class Martile
     end.join
 
   end  
+
+  def filter_out_html(s, name)
+
+    s.gsub(/<(\w+)>.*<\/\1>[^<]*|.+/m) do |x|
+
+      html = x[/<(\w+)>.*<\/\1>/]
+      plain_text = html ? ($') : x
+      s2 = plain_text.length > 0 ? self.method(name).call(plain_text.to_s) : ''
+      ($`).to_s + html.to_s + s2
+    end
+  end
   
   def ordered_list_to_html(s)
     list_to_html s, '#'
@@ -137,4 +149,5 @@ class Martile
     return s
   end
 
+  
 end
