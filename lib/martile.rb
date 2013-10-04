@@ -111,10 +111,13 @@ class Martile
 
     s.gsub(/<(\w+)>.*<\/\1>[^<]*|.+/m) do |x|
 
-      html = x[/<(\w+)>.*<\/\1>/]
+      html = x[/<(\w+)>.*<\/\1>/m]
       plain_text = html ? ($') : x
+      text1 = ($`).to_s
+      s1 = text1.length > 0 ? self.method(name).call(text1) : ''
+      #puts 'plain_text : ' + plain_text.inspect
       s2 = plain_text.length > 0 ? self.method(name).call(plain_text.to_s) : ''
-      ($`).to_s + html.to_s + s2
+      s1 + html.to_s + s2
     end
   end
   
