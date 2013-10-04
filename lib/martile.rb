@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
+#                        escaped automatically
 # feature:  03-Oct-2013: HTML tags now handled
 # bug fix:  25-Sep-2013: removed the new line statement from the join command.
 #                        headings etc. should no longer be split with a new line
@@ -27,7 +29,16 @@ class Martile
   attr_reader :to_html
 
   def initialize(s)
-    s2 = filter_out_html(s, :code_block_to_html)
+    raw_s2 = filter_out_html(s, :code_block_to_html)
+
+    # ensure all angle brackets within <pre><code> is escaped
+    s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
+      y.sub(/<pre><code>(.*)<\/code><\/pre>/m) do |x|
+      s3 = ($1)
+      "<pre><code>%s</code></pre>" % s3.gsub(/</,'&lt;').gsub(/>/,'&gt;')
+      end
+    }.join
+
     #puts 's2 : ' + s2.inspect
     s3 = filter_out_html(s2, :ordered_list_to_html)
     #puts 's3 : ' + s3.inspect
@@ -47,14 +58,15 @@ class Martile
     b =[]
 
     while s =~ /^ {4}/ do
-      
+
       a = s.lines.to_a
       r = a.take_while{|x| x[/^( {4}|\n)/]}
       
-      if r.join.strip.length > 0 then        
-        code_block = "<pre><code>%s</code></pre>" % \
-          a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join\
-          .gsub('<','&lt;').gsub('>','&gt;')
+      if r.join.strip.length > 0 then
+        raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
+
+        code_block = "<pre><code>%s</code></pre>" % raw_code
+
         b << code_block
         s = a.join
         i = r.length        
