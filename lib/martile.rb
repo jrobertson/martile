@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  12-Oct-2013: escaped the non-code content of <pre> blocks
 # feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
 #                        escaped automatically
 # feature:  03-Oct-2013: HTML tags now handled
@@ -38,6 +39,16 @@ class Martile
       "<pre><code>%s</code></pre>" % s3.gsub(/</,'&lt;').gsub(/>/,'&gt;')
       end
     }.join
+
+    # escape the content of <pre> tags which doesn't contain the code tag
+    s2.gsub!(/<(pre)>.*<\/\1>/m) do |x|
+      s = x[5..-7]
+      if s[/^<code>/] then
+        x
+      else
+        "<pre>%s</pre>" % s.gsub(/</,'&lt;').gsub(/>/,'&gt;')
+      end
+    end
 
     #puts 's2 : ' + s2.inspect
     s3 = filter_out_html(s2, :ordered_list_to_html)
