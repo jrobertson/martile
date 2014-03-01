@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  01-Mar-2014: A Dynarex_to_table statement between 2 HTML blocks 
+#                        is now handled properly.
 # bug fix:  01-Mar-2014: Multiple pre tags within a string can now be handled
 # feature:  12-Oct-2013: escaped the non-code content of <pre> blocks
 # feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
@@ -133,7 +135,7 @@ class Martile
 
   def filter_out_html(s, name)
 
-    s.gsub(/<(\w+)>.*<\/\1>[^<]*|.+/m) do |x|
+    s.gsub(/<(\w+)>[^(?:<\/\1>)]+<\/\1>*|.+/m) do |x|
 
       html = x[/<(\w+)>.*<\/\1>/m]
       plain_text = html ? ($') : x
