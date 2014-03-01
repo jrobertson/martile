@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  01-Mar-2014: Multiple pre tags within a string can now be handled
 # feature:  12-Oct-2013: escaped the non-code content of <pre> blocks
 # feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
 #                        escaped automatically
@@ -41,7 +42,7 @@ class Martile
     }.join
 
     # escape the content of <pre> tags which doesn't contain the code tag
-    s2.gsub!(/<(pre)>.*<\/\1>/m) do |x|
+    s2.gsub(/<(pre)>[^(?:<\/\1>)]+<\/\1>/m) do |x|
       s = x[5..-7]
       if s[/^<code>/] then
         x
