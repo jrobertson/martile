@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  31-Mar-2014: Added an _underline_ feature.
 # bug fix:  01-Mar-2014: A Dynarex_to_table statement between 2 HTML blocks 
 #                        is now handled properly.
 # bug fix:  01-Mar-2014: Multiple pre tags within a string can now be handled
@@ -62,7 +63,9 @@ class Martile
     #puts 's5 :' + s5.inspect
     s6 = filter_out_html(s5, :table_to_html) 
     #puts 's6 : ' + s6.inspect
-    @to_html = s6
+    s7 = filter_out_html(s6, :underline) 
+    #puts 's7 : ' + s7.inspect
+    @to_html = s7
   end
 
   private
@@ -171,12 +174,16 @@ class Martile
           end
         end
       end
-
-      Rexle.new(a).xml pretty: true, declaration: false
-
+      puts 'a = '  + a.inspect
+      r = Rexle.new(a).xml pretty: true, declaration: false
+      puts 'r : ' + r.inspect
+      r
     end
     return s
   end
 
+  def underline(s)
+    s.gsub(/_[^_]+_/){|x| "<span class='underline'>%s</span>" % x[1..-2]}
+  end
   
 end
