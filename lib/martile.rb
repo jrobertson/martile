@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  03-Apr-2014: XML or HTML elements should now be filtered out 
+#                        of any transformations.
 # feature:  31-Mar-2014: Added an _underline_ feature.
 # bug fix:  01-Mar-2014: A Dynarex_to_table statement between 2 HTML blocks 
 #                        is now handled properly.
@@ -34,7 +36,9 @@ class Martile
   attr_reader :to_html
 
   def initialize(s)
-    raw_s2 = filter_out_html(s, :code_block_to_html)
+
+    raw_s2 = apply_filter(s) {|x| code_block_to_html x }
+    #puts 'raw_s2: ' + raw_s2.inspect
 
     # ensure all angle brackets within <pre><code> is escaped
     s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
@@ -55,16 +59,22 @@ class Martile
     end
 
     #puts 's2 : ' + s2.inspect
-    s3 = filter_out_html(s2, :ordered_list_to_html)
+
+    s3 = apply_filter(s2) {|x| ordered_list_to_html x }
     #puts 's3 : ' + s3.inspect
-    s4 = filter_out_html(s3, :unordered_list_to_html)
+
+    s4 = apply_filter(s3) {|x| unordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
-    s5 = filter_out_html(s4, :dynarex_to_table)
+
+    s5 = apply_filter(s4) {|x| dynarex_to_table x }
     #puts 's5 :' + s5.inspect
-    s6 = filter_out_html(s5, :table_to_html) 
+
+    s6 = apply_filter(s5) {|x| table_to_html x }
     #puts 's6 : ' + s6.inspect
-    s7 = filter_out_html(s6, :underline) 
+
+    s7 = apply_filter(s6) {|x| underline x }
     #puts 's7 : ' + s7.inspect
+
     @to_html = s7
   end
 
@@ -105,8 +115,8 @@ class Martile
       
       dynarex = Dynarex.new($1)
       dynarex.to_h.map(&:values)
-      '[' + dynarex.to_h.map{|x| x.values.join('|') + "\n"}
-        .join('|').chomp + ']'
+      '[' + dynarex.to_h.map{|x| x.values.join('|').gsub('<','&lt;')\
+                            .gsub('>','&gt;') + "\n"}.join('|').chomp + ']'
     end
   end
 
@@ -136,19 +146,11 @@ class Martile
 
   end  
 
-  def filter_out_html(s, name)
+  def apply_filter(s, &block)
 
-    s.gsub(/<(\w+)>[^(?:<\/\1>)]+<\/\1>*|.+/m) do |x|
-
-      html = x[/<(\w+)>[^(?:<\/\1>)]+<\/\1>/m]
-      plain_text = html ? ($') : x
-      text1 = ($`).to_s
-      s1 = text1.length > 0 ? self.method(name).call(text1) : ''
-      #puts 'plain_text : ' + plain_text.inspect
-      s2 = plain_text.length > 0 ? self.method(name).call(plain_text.to_s) : ''
-      s1 + html.to_s + s2
-    end
-  end
+    Rexle.new("<root>#{s}</root>").root\
+            .map {|x|  x.is_a?(String) ? block.call(x) : x}.join
+  end  
   
   def ordered_list_to_html(s)
     list_to_html s, '#'
@@ -174,9 +176,8 @@ class Martile
           end
         end
       end
-      puts 'a = '  + a.inspect
+
       r = Rexle.new(a).xml pretty: true, declaration: false
-      puts 'r : ' + r.inspect
       r
     end
     return s
