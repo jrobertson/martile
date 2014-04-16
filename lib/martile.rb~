@@ -8,6 +8,18 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  03-Apr-2014: XML or HTML elements should now be filtered out 
+#                        of any transformations.
+# feature:  31-Mar-2014: Added an _underline_ feature.
+# bug fix:  01-Mar-2014: A Dynarex_to_table statement between 2 HTML blocks 
+#                        is now handled properly.
+# bug fix:  01-Mar-2014: Multiple pre tags within a string can now be handled
+# feature:  12-Oct-2013: escaped the non-code content of <pre> blocks
+# feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
+#                        escaped automatically
+# feature:  03-Oct-2013: HTML tags now handled
+# bug fix:  25-Sep-2013: removed the new line statement from the join command.
+#                        headings etc. should no longer be split with a new line
 # feature:  12-Aug-2013: unordered_list supported
 # feature:  31-Mar-2013: markdown inside a martile ordered list
 #                          is now converted to HTML
@@ -24,17 +36,46 @@ class Martile
   attr_reader :to_html
 
   def initialize(s)
-    s2 = code_block_to_html(s)
-    puts 's2 : ' + s2.inspect
-    s3 = ordered_list_to_html(s2)
-    puts 's3 : ' + s3.inspect
-    s4 = unordered_list_to_html(s3)  
-    puts 's4 : ' + s4.inspect
-    s5 = dynarex_to_table(s4)      
-    puts 's5 :' + s5.inspect
-    s6 = table_to_html(s5)      
-    puts 's6 : ' + s6.inspect
-    @to_html = s6
+
+    raw_s2 = apply_filter(s) {|x| code_block_to_html x }
+    #puts 'raw_s2: ' + raw_s2.inspect
+
+    # ensure all angle brackets within <pre><code> is escaped
+    s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
+      y.sub(/<pre><code>(.*)<\/code><\/pre>/m) do |x|
+      s3 = ($1)
+      "<pre><code>%s</code></pre>" % s3.gsub(/</,'&lt;').gsub(/>/,'&gt;')
+      end
+    }.join
+
+    # escape the content of <pre> tags which doesn't contain the code tag
+    s2.gsub(/<(pre)>[^(?:<\/\1>)]+<\/\1>/m) do |x|
+      s = x[5..-7]
+      if s[/^<code>/] then
+        x
+      else
+        "<pre>%s</pre>" % s.gsub(/</,'&lt;').gsub(/>/,'&gt;')
+      end
+    end
+
+    #puts 's2 : ' + s2.inspect
+
+    s3 = apply_filter(s2) {|x| ordered_list_to_html x }
+    #puts 's3 : ' + s3.inspect
+
+    s4 = apply_filter(s3) {|x| unordered_list_to_html x }
+    #puts 's4 : ' + s4.inspect
+
+    s5 = apply_filter(s4) {|x| dynarex_to_table x }
+    #puts 's5 :' + s5.inspect
+
+    s6 = apply_filter(s5) {|x| table_to_html x }
+    #puts 's6 : ' + s6.inspect
+
+    s7 = apply_filter(s6) {|x| underline x }
+    #puts 's7 : ' + s7.inspect
+
+    @to_html = s7
   end
 
   private
@@ -44,14 +85,15 @@ class Martile
     b =[]
 
     while s =~ /^ {4}/ do
-      
+
       a = s.lines.to_a
       r = a.take_while{|x| x[/^( {4}|\n)/]}
       
-      if r.join.strip.length > 0 then        
-        code_block = "<pre><code>%s</code></pre>" % \
-          a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join\
-          .gsub('<','&lt;').gsub('>','&gt;')
+      if r.join.strip.length > 0 then
+        raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
+
+        code_block = "<pre><code>%s</code></pre>" % raw_code
+
         b << code_block
         s = a.join
         i = r.length        
@@ -63,7 +105,7 @@ class Martile
       
     end
     
-    b.join("\n") + s    
+    b.join + s    
 
   end
   
@@ -73,8 +115,8 @@ class Martile
       
       dynarex = Dynarex.new($1)
       dynarex.to_h.map(&:values)
-      '[' + dynarex.to_h.map{|x| x.values.join('|') + "\n"}
-        .join('|').chomp + ']'
+      '[' + dynarex.to_h.map{|x| x.values.join('|').gsub('<','&lt;')\
+                            .gsub('>','&gt;') + "\n"}.join('|').chomp + ']'
     end
   end
 
@@ -103,6 +145,12 @@ class Martile
     end.join
 
   end  
+
+  def apply_filter(s, &block)
+
+    Rexle.new("<root>#{s}</root>").root\
+            .map {|x|  x.is_a?(String) ? block.call(x) : x}.join
+  end  
   
   def ordered_list_to_html(s)
     list_to_html s, '#'
@@ -129,10 +177,14 @@ class Martile
         end
       end
 
-      Rexle.new(a).xml pretty: true, declaration: false
-
+      r = Rexle.new(a).xml pretty: true, declaration: false
+      r
     end
     return s
   end
 
+  def underline(s)
+    s.gsub(/_[^_]+_/){|x| "<span class='underline'>%s</span>" % x[1..-2]}
+  end
+  
 end

@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  16-Apr-2014: Words containing an underscore should no longer be 
+#                        transformed to an underline tag
 # bug fix:  03-Apr-2014: XML or HTML elements should now be filtered out 
 #                        of any transformations.
 # feature:  31-Mar-2014: Added an _underline_ feature.
@@ -184,7 +186,10 @@ class Martile
   end
 
   def underline(s)
-    s.gsub(/_[^_]+_/){|x| "<span class='underline'>%s</span>" % x[1..-2]}
+
+    s.lines.map do |line|
+      line.gsub(/_[^_]+_/){|x| "<span class='underline'>%s</span>" % x[1..-2]}
+    end.join
   end
   
 end
