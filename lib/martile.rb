@@ -187,9 +187,10 @@ class Martile
 
   def underline(s)
 
-    s.lines.map do |line|
-      line.gsub(/_[^_]+_/){|x| "<span class='underline'>%s</span>" % x[1..-2]}
-    end.join
+    s.gsub(/_[^_\(\)\n]+_\b/) do |x| 
+      "<span class='underline'>%s</span>" % x[1..-2]
+    end
+
   end
   
 end
