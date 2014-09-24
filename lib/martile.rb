@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  24-Sep-2014: A kind of markdown list can now be created inside 
+#                        of <ol> or <ul> tags
 # bug fix:  16-Apr-2014: Words containing an underscore should no longer be 
 #                        transformed to an underline tag
 # bug fix:  03-Apr-2014: XML or HTML elements should now be filtered out 
@@ -39,8 +41,7 @@ class Martile
 
   def initialize(s)
 
-    raw_s2 = apply_filter(s) {|x| code_block_to_html x }
-    #puts 'raw_s2: ' + raw_s2.inspect
+    raw_s2 = apply_filter(s.strip) {|x| code_block_to_html x }
 
     # ensure all angle brackets within <pre><code> is escaped
     s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
@@ -61,23 +62,23 @@ class Martile
     end
 
     #puts 's2 : ' + s2.inspect
-
-    s3 = apply_filter(s2) {|x| ordered_list_to_html x }
-    #puts 's3 : ' + s3.inspect
-
-    s4 = apply_filter(s3) {|x| unordered_list_to_html x }
+    s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
+    s4 = apply_filter(s3) {|x| ordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
 
-    s5 = apply_filter(s4) {|x| dynarex_to_table x }
-    #puts 's5 :' + s5.inspect
+    s5 = apply_filter(s4) {|x| unordered_list_to_html x }
+    #puts 's5 : ' + s5.inspect
 
-    s6 = apply_filter(s5) {|x| table_to_html x }
-    #puts 's6 : ' + s6.inspect
+    s6 = apply_filter(s5) {|x| dynarex_to_table x }
+    #puts 's6 :' + s6.inspect
 
-    s7 = apply_filter(s6) {|x| underline x }
+    s7 = apply_filter(s6) {|x| table_to_html x }
     #puts 's7 : ' + s7.inspect
 
-    @to_html = s7
+    s8 = apply_filter(s7) {|x| underline x }
+    #puts 's8 : ' + s8.inspect
+
+    @to_html = s8
   end
 
   private
@@ -148,11 +149,49 @@ class Martile
 
   end  
 
-  def apply_filter(s, &block)
+  def apply_filter(s, names=[], &block)
 
-    Rexle.new("<root>#{s}</root>").root\
-            .map {|x|  x.is_a?(String) ? block.call(x) : x}.join
-  end  
+    Rexle.new("<root>#{s}</root>").root.map do |x|  
+
+      if x.is_a?(String) then
+        block.call(x)
+      else
+        
+        if names.grep  x.name then
+          block.call(x.xml)
+        else
+          x
+        end   
+        
+      end      
+    end.join
+  end
+  
+  def explicit_list_to_html(s)
+
+    match = s.match(/<([ou]l)>([\*#])/m)
+
+    if match then
+
+      type, symbol = match.captures
+      symbol = ('\\' + symbol) if symbol == '*'
+
+      a3 = s.split(/(?=<#{type}>)/).map do |x|
+       # puts 'x' + x.inspect
+        if x =~ /<ol>/ then
+          "<%s>%s</%s>" % \
+              [type, x[/<#{type}>[#{symbol}]\s*(.*)<\/#{type}>/m,1]\
+               .split(/\n#{symbol}\s*/).map {|y| "<li>%s</li>" % y}.join, type]
+        else
+          x
+        end
+      end
+
+    else
+      s
+    end
+    
+  end
   
   def ordered_list_to_html(s)
     list_to_html s, '#'
