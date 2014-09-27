@@ -8,7 +8,13 @@ require 'dynarex'
 require 'rdiscount'
 
 
-# feature:  27-Sep-2014: A smartlink can now be used e.g. ?link http://someurl?
+# feature:  27-Sep-2014: 1. A smartlink can now be used 
+#                                               e.g. ?link http://someurl?
+#                        2. pre tegs can now be created from 2 pairs of slash 
+#                           tags, before and after the pre tag content e.g.
+#                            //
+#                            testing
+#                            //
 # feature:  24-Sep-2014: A kind of markdown list can now be created inside 
 #                        of <ol> or <ul> tags
 # bug fix:  16-Apr-2014: Words containing an underscore should no longer be 
@@ -40,7 +46,9 @@ class Martile
 
   attr_reader :to_html
 
-  def initialize(s)
+  def initialize(raw_s)
+    
+    s = slashpre raw_s
 
     raw_s2 = apply_filter(s.strip) {|x| code_block_to_html x }
 
@@ -238,6 +246,14 @@ class Martile
   
   def smartlink(s)
     s.gsub(/\B\?([^\n]+) +(https?:\/\/[^\b]+)\?\B/,'[\1](\2)')
+  end
+  
+  def slashpre(s
+               )
+    s.gsub(/\B\/\/([^\/]+)\B\/\//) do |x|
+      "<pre>#{($1).lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
+    end
+    
   end
   
 end
