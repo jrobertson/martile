@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  27-Sep-2014: A smartlink can now be used e.g. ?link http://someurl?
 # feature:  24-Sep-2014: A kind of markdown list can now be created inside 
 #                        of <ol> or <ul> tags
 # bug fix:  16-Apr-2014: Words containing an underscore should no longer be 
@@ -76,9 +77,11 @@ class Martile
     #puts 's7 : ' + s7.inspect
 
     s8 = apply_filter(s7) {|x| underline x }
+    s9 = apply_filter(s8) {|x| smartlink x }
+
     #puts 's8 : ' + s8.inspect
 
-    @to_html = s8
+    @to_html = s9
   end
 
   private
@@ -202,6 +205,7 @@ class Martile
   end  
 
   def table_to_html(s)
+    
     # create any tables
     s.gsub!(/^\[[^|]+\|[^\n]+\n\|[^\]]+\]/) do |x|
 
@@ -230,6 +234,10 @@ class Martile
       "<span class='underline'>%s</span>" % x[1..-2]
     end
 
+  end
+  
+  def smartlink(s)
+    s.gsub(/\B\?([^\n]+) +(https?:\/\/[^\b]+)\?\B/,'[\1](\2)')
   end
   
 end
