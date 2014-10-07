@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  07-Oct-2014: Smartlink tested for new cases
 # feature:  27-Sep-2014: 1. A smartlink can now be used 
 #                                               e.g. ?link http://someurl?
 #                        2. pre tegs can now be created from 2 pairs of slash 
@@ -245,14 +246,17 @@ class Martile
   end
   
   def smartlink(s)
-    s.gsub(/\B\?([^\n]+) +(https?:\/\/[^\b]+)\?\B/,'[\1](\2)')
-  end
+    
+    s.gsub(/\B\?([^\n]+) +(https?:\/\/.*\?)(?=\B)/) do
+      "[%s](%s)" % [$1, ($2).chop]
+    end
+
+  end  
   
   def slashpre(s
                )
     s.gsub(/\B\/\/([^\/]+)\B\/\//) do |x|
-      "<pre>#{($1)..gsub('&','&amp;').gsub('<','&lt;').gsub('>','&gt;')\
-                                   .lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
+      "<pre>#{($1).lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
     end
     
   end

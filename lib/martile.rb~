@@ -251,7 +251,8 @@ class Martile
   def slashpre(s
                )
     s.gsub(/\B\/\/([^\/]+)\B\/\//) do |x|
-      "<pre>#{($1).lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
+      "<pre>#{($1)..gsub('&','&amp;').gsub('<','&lt;').gsub('>','&gt;')\
+                                   .lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
     end
     
   end
