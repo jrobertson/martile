@@ -8,10 +8,16 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  30-Oct-2014: A section can now be between a set of equal signs at 
+#                        the beginning of the line 
+#                        e.g. 
+#                        =
+#                            inside a section
+#                        =
 # bug fix:  07-Oct-2014: Smartlink tested for new cases
 # feature:  27-Sep-2014: 1. A smartlink can now be used 
 #                                               e.g. ?link http://someurl?
-#                        2. pre tegs can now be created from 2 pairs of slash 
+#                        2. pre tags can now be created from 2 pairs of slash 
 #                           tags, before and after the pre tag content e.g.
 #                            //
 #                            testing
@@ -51,7 +57,7 @@ class Martile
     
     s = slashpre raw_s
 
-    raw_s2 = apply_filter(s.strip) {|x| code_block_to_html x }
+    raw_s2 = apply_filter(s.strip + "\n") {|x| code_block_to_html x }
 
     # ensure all angle brackets within <pre><code> is escaped
     s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
@@ -87,10 +93,11 @@ class Martile
 
     s8 = apply_filter(s7) {|x| underline x }
     s9 = apply_filter(s8) {|x| smartlink x }
+    s10 = apply_filter(s9) {|x| section x }
 
     #puts 's8 : ' + s8.inspect
 
-    @to_html = s9
+    @to_html = s10
   end
 
   private
@@ -253,12 +260,42 @@ class Martile
 
   end  
   
-  def slashpre(s
-               )
+  def slashpre(s)
     s.gsub(/\B\/\/([^\/]+)\B\/\//) do |x|
       "<pre>#{($1).lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
     end
     
+  end
+  
+  def section(s)
+    
+    a = s.lines    
+    a2 = a.inject([[]]) do |r,x|
+      
+      match = x.match(/^=[^=]#?(\w+)?/)
+
+      if match then
+        
+        if r.last.first[/<section/] then
+
+          list = r.pop
+          r << ["%s%s</section>" % 
+                [list[0], RDiscount.new(list[1..-1].join).to_html]]
+          r << []
+        else
+
+          raw_id = match.captures.first
+          id = raw_id ? (" id='%s'" % raw_id) : ''          
+          r << ["<section#{id}>"]
+        end
+        
+      else
+        r.last << x
+      end
+      r
+    end
+
+    a2.join
   end
   
 end
