@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  10-Dec-2014: Generation of pre tags using // can now only happen 
+#                        when the // appears at the beginning of the line
 # feature:  30-Oct-2014: A section can now be between a set of equal signs at 
 #                        the beginning of the line 
 #                        e.g. 
@@ -261,7 +263,7 @@ class Martile
   end  
   
   def slashpre(s)
-    s.gsub(/\B\/\/([^\/]+)\B\/\//) do |x|
+    s.gsub(/^\/\/([^\/]+)^\/\//) do |x|
       "<pre>#{($1).lines.map{|y| y.sub(/^ +/,'')}.join}</pre>"
     end
     
