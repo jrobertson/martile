@@ -2,12 +2,14 @@
 
 # file: martile.rb
 
-require 'rexle-builder'
-require 'rexle'
+#require 'rexle-builder'
+#require 'rexle'
 require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  01-Mar-2015: code_block_to_html() now only searches strings which 
+#                        are outside of angle brackets
 # bug fix:  10-Dec-2014: Generation of pre tags using // can now only happen 
 #                        when the // appears at the beginning of the line
 # feature:  30-Oct-2014: A section can now be between a set of equal signs at 
@@ -58,9 +60,9 @@ class Martile
   def initialize(raw_s)
     
     s = slashpre raw_s
-
+    #puts 's : ' + s.inspect
     raw_s2 = apply_filter(s.strip + "\n") {|x| code_block_to_html x }
-
+    #puts 'raw_s2 : ' + raw_s2.inspect
     # ensure all angle brackets within <pre><code> is escaped
     s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
       y.sub(/<pre><code>(.*)<\/code><\/pre>/m) do |x|
@@ -81,6 +83,7 @@ class Martile
 
     #puts 's2 : ' + s2.inspect
     s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
+    #puts 's3 : ' + s3.inspect
     s4 = apply_filter(s3) {|x| ordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
 
@@ -106,30 +109,41 @@ class Martile
 
   def code_block_to_html(s)
 
-    b =[]
-
-    while s =~ /^ {4}/ do
-
-      a = s.lines.to_a
-      r = a.take_while{|x| x[/^( {4}|\n)/]}
-      
-      if r.join.strip.length > 0 then
-        raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
-
-        code_block = "<pre><code>%s</code></pre>" % raw_code
-
-        b << code_block
-        s = a.join
-        i = r.length        
-      else        
-        i = (s =~ /^ {4}/)        
-      end
-
-      b << s.slice!(0,i)
-      
-    end
     
-    b.join + s    
+    s.split(/(?=<pre>)/).map do |s2|
+
+      if s2[0] != '<' then
+        
+        b =[]
+
+        while s2 =~ /^ {4}/ do
+
+          a = s2.lines.to_a
+          r = a.take_while{|x| x[/^( {4}|\n)/]}
+          
+          if r.join.strip.length > 0 then
+            raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
+
+            code_block = "<pre><code>%s</code></pre>" % raw_code
+
+            b << code_block
+            s2 = a.join
+            i = r.length        
+          else        
+            i = (s =~ /^ {4}/)        
+          end
+
+          b << s2.slice!(0,i)
+          
+        end
+        
+        b.join + s2
+      else
+        s2
+      end
+      
+    end.join
+      
 
   end
   
@@ -179,7 +193,7 @@ class Martile
       else
         
         if names.grep  x.name then
-          block.call(x.xml)
+          block.call(x.xml pretty: false)
         else
           x
         end   
