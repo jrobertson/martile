@@ -10,6 +10,8 @@ require 'rdiscount'
 
 # bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
 #                        the string is passed to Rexle
+# bug fix:               A new line character is now added after the creation 
+#                        of the code block tags
 # bug fix:  01-Mar-2015: code_block_to_html() now only searches strings which 
 #                        are outside of angle brackets
 # bug fix:  10-Dec-2014: Generation of pre tags using // can now only happen 
@@ -108,7 +110,7 @@ class Martile
           if r.join.strip.length > 0 then
             raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
 
-            code_block = "<pre><code>%s</code></pre>" % escape(raw_code)
+            code_block = "<pre><code>%s</code></pre>\n" % escape(raw_code)
 
             b << code_block
             s2 = a.join

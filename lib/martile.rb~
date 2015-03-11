@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
+#                        the string is passed to Rexle
 # bug fix:  01-Mar-2015: code_block_to_html() now only searches strings which 
 #                        are outside of angle brackets
 # bug fix:  10-Dec-2014: Generation of pre tags using // can now only happen 
@@ -61,25 +63,7 @@ class Martile
     
     s = slashpre raw_s
     #puts 's : ' + s.inspect
-    raw_s2 = apply_filter(s.strip + "\n") {|x| code_block_to_html x }
-    #puts 'raw_s2 : ' + raw_s2.inspect
-    # ensure all angle brackets within <pre><code> is escaped
-    s2 = raw_s2.split(/(?=<pre><code>)/m).map { |y|
-      y.sub(/<pre><code>(.*)<\/code><\/pre>/m) do |x|
-      s3 = ($1)
-      "<pre><code>%s</code></pre>" % s3.gsub(/</,'&lt;').gsub(/>/,'&gt;')
-      end
-    }.join
-
-    # escape the content of <pre> tags which doesn't contain the code tag
-    s2.gsub(/<(pre)>[^(?:<\/\1>)]+<\/\1>/m) do |x|
-      s = x[5..-7]
-      if s[/^<code>/] then
-        x
-      else
-        "<pre>%s</pre>" % s.gsub(/</,'&lt;').gsub(/>/,'&gt;')
-      end
-    end
+    s2 = code_block_to_html(s.strip + "\n")
 
     #puts 's2 : ' + s2.inspect
     s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
@@ -124,7 +108,7 @@ class Martile
           if r.join.strip.length > 0 then
             raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
 
-            code_block = "<pre><code>%s</code></pre>" % raw_code
+            code_block = "<pre><code>%s</code></pre>" % escape(raw_code)
 
             b << code_block
             s2 = a.join
@@ -153,10 +137,13 @@ class Martile
       
       dynarex = Dynarex.new($1)
       dynarex.to_h.map(&:values)
-      '[' + dynarex.to_h.map{|x| x.values.join('|').gsub('<','&lt;')\
-                            .gsub('>','&gt;') + "\n"}.join('|').chomp + ']'
+      '[' + dynarex.to_h.map{|x| escape(x.values.join('|')) + "\n"}.join('|').chomp + ']'
     end
   end
+  
+  def escape(s)
+    s.gsub('<','&lt;').gsub('>','&gt;')
+  end  
 
   def list_to_html(s,symbol='#')
 
@@ -248,7 +235,7 @@ class Martile
         rows.each do |cols|
           xml.tr do
             cols.each do |col|
-              xml.td col.gsub('<','&lt;').gsub('>','&gt;')
+              xml.td escape(col)
             end
           end
         end
