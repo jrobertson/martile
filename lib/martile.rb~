@@ -2,7 +2,7 @@
 
 # file: martile.rb
 
-require 'rexle-builder'
+#require 'rexle-builder'
 #require 'rexle'
 require 'dynarex'
 require 'rdiscount'
