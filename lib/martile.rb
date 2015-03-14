@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  14-Mar-2015: A section can now be
+#                                        written without an error occurring
 # bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
 #                        the string is passed to Rexle
 # bug fix:               A new line character is now added after the creation 
@@ -273,15 +275,15 @@ class Martile
   end
   
   def section(s)
-    
+
     a = s.lines    
     a2 = a.inject([[]]) do |r,x|
       
       match = x.match(/^=[^=]#?(\w+)?/)
 
       if match then
-        
-        if r.last.first[/<section/] then
+
+        if r.last.length > 0 and r.last.first[/<section/] then
 
           list = r.pop
           r << ["%s%s</section>" % 
