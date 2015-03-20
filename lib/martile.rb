@@ -10,6 +10,7 @@ require 'rdiscount'
 
 # bug fix:  20-Mar-2015: HTML and XML elements should not be filtered out of 
 #                                                          the section() method
+# feature:               Added the unicode checkbox feature from the Mtlite gem
 # bug fix:  14-Mar-2015: A section can now be
 #                                        written without an error occurring
 # bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
@@ -90,10 +91,12 @@ class Martile
     s9 = apply_filter(s8) {|x| smartlink x }
     #s10 = apply_filter(s9) {|x| section x }
     s10 = section s9
+    
+    s11 = apply_filter(s10) {|x| mtlite_utils x }
 
     #puts 's8 : ' + s8.inspect
 
-    @to_html = s10
+    @to_html = s11
   end
 
   private
@@ -220,6 +223,14 @@ class Martile
       s
     end
     
+  end
+  
+  def mtlite_utils(s)
+    
+    # convert square brackets to unicode check boxes
+    # replaces a [] with a unicode checkbox, 
+    #                         and [x] with a unicode checked checkbox
+    s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
   end
   
   def ordered_list_to_html(s)
