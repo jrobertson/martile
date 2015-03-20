@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix:  20-Mar-2015: HTML and XML elements should not be filtered out of 
+#                                                          the section() method
 # bug fix:  14-Mar-2015: A section can now be
 #                                        written without an error occurring
 # bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
@@ -86,7 +88,8 @@ class Martile
 
     s8 = apply_filter(s7) {|x| underline x }
     s9 = apply_filter(s8) {|x| smartlink x }
-    s10 = apply_filter(s9) {|x| section x }
+    #s10 = apply_filter(s9) {|x| section x }
+    s10 = section s9
 
     #puts 's8 : ' + s8.inspect
 
@@ -276,9 +279,10 @@ class Martile
   
   def section(s)
 
-    a = s.lines    
+    a = s.lines
+
     a2 = a.inject([[]]) do |r,x|
-      
+
       match = x.match(/^=[^=]#?(\w+)?/)
 
       if match then
@@ -297,8 +301,10 @@ class Martile
         end
         
       else
+
         r.last << x
       end
+
       r
     end
 
