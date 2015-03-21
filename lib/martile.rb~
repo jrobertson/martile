@@ -68,7 +68,7 @@ class Martile
 
   attr_reader :to_html
 
-  def initialize(raw_s, ignore_domainlabel=nil)
+  def initialize(raw_s, ignore_domainlabel: nil)
     
     @ignore_domainlabel = ignore_domainlabel
     
@@ -94,9 +94,10 @@ class Martile
     s8 = apply_filter(s7) {|x| underline x }
     s9 = apply_filter(s8) {|x| smartlink x }
     #s10 = apply_filter(s9) {|x| section x }
-    s10 = section s9
+    s10 = apply_filter(s9) {|x| mtlite_utils x }        
+    s11 = section s10
     
-    s11 = apply_filter(s10) {|x| mtlite_utils x }    
+
 
     #puts 's8 : ' + s8.inspect
 
@@ -234,9 +235,9 @@ class Martile
     # convert square brackets to unicode check boxes
     # replaces a [] with a unicode checkbox, 
     #                         and [x] with a unicode checked checkbox
-    s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
-    
-    s.gsub!(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
+    s2 = s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
+ 
+    s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
       next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
       
@@ -244,6 +245,7 @@ class Martile
       r = s2.length >= 3 ? s2[1..-1] :  s2
       "%s <span class='domain'>[%s]</span>" % [x, r.join('.')]
     end          
+
   end
   
   def ordered_list_to_html(s)
