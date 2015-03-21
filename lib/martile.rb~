@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  21-Mar-2015: URLS are now given labels e.g.
+#          [news](http://news.bbc.co.uk)<span class='domain'>[bbc.co.uk]</span>
 # bug fix:  20-Mar-2015: HTML and XML elements should not be filtered out of 
 #                                                          the section() method
 # feature:               Added the unicode checkbox feature from the Mtlite gem
@@ -66,7 +68,9 @@ class Martile
 
   attr_reader :to_html
 
-  def initialize(raw_s)
+  def initialize(raw_s, ignore_domainlabel=nil)
+    
+    @ignore_domainlabel = ignore_domainlabel
     
     s = slashpre raw_s
     #puts 's : ' + s.inspect
@@ -92,7 +96,7 @@ class Martile
     #s10 = apply_filter(s9) {|x| section x }
     s10 = section s9
     
-    s11 = apply_filter(s10) {|x| mtlite_utils x }
+    s11 = apply_filter(s10) {|x| mtlite_utils x }    
 
     #puts 's8 : ' + s8.inspect
 
@@ -231,6 +235,15 @@ class Martile
     # replaces a [] with a unicode checkbox, 
     #                         and [x] with a unicode checked checkbox
     s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
+    
+    s.gsub!(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
+
+      next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
+      
+      s2 = x[/https?:\/\/([^\/]+)/,1].split(/\./)
+      r = s2.length >= 3 ? s2[1..-1] :  s2
+      "%s <span class='domain'>[%s]</span>" % [x, r.join('.')]
+    end          
   end
   
   def ordered_list_to_html(s)

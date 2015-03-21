@@ -8,67 +8,11 @@ require 'dynarex'
 require 'rdiscount'
 
 
-# feature:  21-Mar-2015: URLS are now given labels e.g.
-#          [news](http://news.bbc.co.uk)<span class='domain'>[bbc.co.uk]</span>
-# bug fix:  20-Mar-2015: HTML and XML elements should not be filtered out of 
-#                                                          the section() method
-# feature:               Added the unicode checkbox feature from the Mtlite gem
-# bug fix:  14-Mar-2015: A section can now be
-#                                        written without an error occurring
-# bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
-#                        the string is passed to Rexle
-# bug fix:               A new line character is now added after the creation 
-#                        of the code block tags
-# bug fix:  01-Mar-2015: code_block_to_html() now only searches strings which 
-#                        are outside of angle brackets
-# bug fix:  10-Dec-2014: Generation of pre tags using // can now only happen 
-#                        when the // appears at the beginning of the line
-# feature:  30-Oct-2014: A section can now be between a set of equal signs at 
-#                        the beginning of the line 
-#                        e.g. 
-#                        =
-#                            inside a section
-#                        =
-# bug fix:  07-Oct-2014: Smartlink tested for new cases
-# feature:  27-Sep-2014: 1. A smartlink can now be used 
-#                                               e.g. ?link http://someurl?
-#                        2. pre tags can now be created from 2 pairs of slash 
-#                           tags, before and after the pre tag content e.g.
-#                            //
-#                            testing
-#                            //
-# feature:  24-Sep-2014: A kind of markdown list can now be created inside 
-#                        of <ol> or <ul> tags
-# bug fix:  16-Apr-2014: Words containing an underscore should no longer be 
-#                        transformed to an underline tag
-# bug fix:  03-Apr-2014: XML or HTML elements should now be filtered out 
-#                        of any transformations.
-# feature:  31-Mar-2014: Added an _underline_ feature.
-# bug fix:  01-Mar-2014: A Dynarex_to_table statement between 2 HTML blocks 
-#                        is now handled properly.
-# bug fix:  01-Mar-2014: Multiple pre tags within a string can now be handled
-# feature:  12-Oct-2013: escaped the non-code content of <pre> blocks
-# feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
-#                        escaped automatically
-# feature:  03-Oct-2013: HTML tags now handled
-# bug fix:  25-Sep-2013: removed the new line statement from the join command.
-#                        headings etc. should no longer be split with a new line
-# feature:  12-Aug-2013: unordered_list supported
-# feature:  31-Mar-2013: markdown inside a martile ordered list
-#                          is now converted to HTML
-# bug fix:  02-Nov-2012: within dynarex_to_table URLs containing a 
-#                        dash now work
-# bug fix:  20-Sep-2012: in ordered_list_to_html it now cuts off from 
-#                        parsing headings
-# bug fix:  04-Aug-2012; replaced \s with a space in regex patterns
-# modified: 28-Mar-2012; Added dynarex_to_table
-# modified: 28-Aug-2011; Added escaping of HTML within a code block
-
 class Martile
 
   attr_reader :to_html
 
-  def initialize(raw_s, ignore_domainlabel=nil)
+  def initialize(raw_s, ignore_domainlabel: nil)
     
     @ignore_domainlabel = ignore_domainlabel
     
@@ -234,9 +178,9 @@ class Martile
     # convert square brackets to unicode check boxes
     # replaces a [] with a unicode checkbox, 
     #                         and [x] with a unicode checked checkbox
-    s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
-    
-    s.gsub!(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
+    s2 = s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
+ 
+    s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
       next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
       
@@ -244,6 +188,7 @@ class Martile
       r = s2.length >= 3 ? s2[1..-1] :  s2
       "%s <span class='domain'>[%s]</span>" % [x, r.join('.')]
     end          
+
   end
   
   def ordered_list_to_html(s)
