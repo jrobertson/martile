@@ -8,6 +8,9 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# bug fix: 28-Mar-2015: Fixes a bug introduced on the 20-Mar-2015 relating to 
+#                       Markdown lists not neing converted to HTML 
+#  see http://www.jamesrobertson.eu/bugtracker/2015/mar/28/markdown-lists-are-not-converted-to-html.html
 # feature:  21-Mar-2015: URLS are now given labels e.g.
 #          [news](http://news.bbc.co.uk)<span class='domain'>[bbc.co.uk]</span>
 # bug fix:  20-Mar-2015: HTML and XML elements should not be filtered out of 
@@ -235,7 +238,7 @@ class Martile
     # convert square brackets to unicode check boxes
     # replaces a [] with a unicode checkbox, 
     #                         and [x] with a unicode checked checkbox
-    s2 = s.gsub(/\[\s*\]/,'&#9744;').gsub(/\[x\]/,'&#9745;')    
+    s2 = s.gsub(/\s\[\s*\]\s/,' &#9744;').gsub(/\s\[x\]\s/,' &#9745;')    
  
     s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
@@ -243,7 +246,7 @@ class Martile
       
       s2 = x[/https?:\/\/([^\/]+)/,1].split(/\./)
       r = s2.length >= 3 ? s2[1..-1] :  s2
-      "%s <span class='domain'>[%s]</span>" % [x, r.join('.')]
+      "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
     end          
 
   end
