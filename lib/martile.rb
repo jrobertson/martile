@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  29-Mar-2015: Borrowed the strikethru feature from Mtlite
 # bug fix:  28-Mar-2015: Fixes a bug introduced on the 20-Mar-2015 relating to 
 #                        Markdown lists not being converted to HTML 
 #  see http://www.jamesrobertson.eu/bugtracker/2015/mar/28/markdown-lists-are-not-converted-to-html.html
@@ -242,14 +243,20 @@ class Martile
     #                         and [x] with a unicode checked checkbox
     s2 = s.gsub(/\s\[\s*\]\s/,' &#9744; ').gsub(/\s\[x\]\s/,' &#9745; ')
  
-    s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
+    s3 = s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
       next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
       
-      s2 = x[/https?:\/\/([^\/]+)/,1].split(/\./)
-      r = s2.length >= 3 ? s2[1..-1] :  s2
+      a = x[/https?:\/\/([^\/]+)/,1].split(/\./)
+      r = a.length >= 3 ? a[1..-1] :  a
       "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
-    end          
+    end
+
+    # add strikethru to completed items
+    # e.g. -milk cow- becomes <del>milk cow</del>
+    s3.gsub(/\s-[^-]+-?[^-]+-[\s\]]/) do |x|
+      x.sub(/-([&\w]+.*\w+)-/,'<del>\1</del>')
+    end    
 
   end
   
