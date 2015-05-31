@@ -268,15 +268,21 @@ class Martile
     #                         and [x] with a unicode checked checkbox
     s2 = s.gsub(/\s\[\s*\]\s/,' &#9744; ').gsub(/\s\[x\]\s/,' &#9745; ')
  
-    # create domain labels for hyperlinks
-    #
-    s3 = s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
+    s3 = if @ignore_domain_label.nil? then
+    
+      # create domain labels for hyperlinks
+      #
+      s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
-      next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
+        next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
+        
+        a = x[/https?:\/\/([^\/]+)/,1].split(/\./)
+        r = a.length >= 3 ? a[1..-1] :  a
+        "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
+      end
       
-      a = x[/https?:\/\/([^\/]+)/,1].split(/\./)
-      r = a.length >= 3 ? a[1..-1] :  a
-      "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
+    else
+      s2
     end
 
     # add strikethru to completed items
