@@ -11,6 +11,8 @@ require 'rdiscount'
 # feature:  31-May-2015: Transforms a kind-of markdown URL to an audio tag 
 #    e.g. !a[](http://someurl) transforms to ). Transforms a kind-of 
 #   markdown URL to an video tag e.g. !v[](http://someurl) transforms to )
+# bug fix:               The inner Martile call within a Section now 
+#  ignores domain labels to avoid duplication of URL scanning.
 # feature:  29-Mar-2015: Borrowed the strikethru feature from Mtlite
 # bug fix:  28-Mar-2015: Fixes a bug introduced on the 20-Mar-2015 relating to 
 #                        Markdown lists not being converted to HTML 
@@ -355,7 +357,8 @@ class Martile
           list = r.pop
           r << ["%s%s</section>" % 
                  [list[0], \
-                  RDiscount.new(Martile.new(list[1..-1].join).to_html).to_html
+                  RDiscount.new(Martile.new(list[1..-1].join, \
+                                   ignore_domainlabel: true).to_html).to_html
                  ]
                ]
           r << []

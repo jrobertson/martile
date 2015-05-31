@@ -355,7 +355,7 @@ class Martile
           list = r.pop
           r << ["%s%s</section>" % 
                  [list[0], \
-                  RDiscount.new(Martile.new(list[1..-1].join)).to_html
+                  RDiscount.new(Martile.new(list[1..-1].join).to_html).to_html
                  ]
                ]
           r << []
