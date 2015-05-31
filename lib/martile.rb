@@ -8,6 +8,9 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  31-May-2015: Transforms a kind-of markdown URL to an audio tag 
+#    e.g. !a[](http://someurl) transforms to ). Transforms a kind-of 
+#   markdown URL to an video tag e.g. !v[](http://someurl) transforms to )
 # feature:  29-Mar-2015: Borrowed the strikethru feature from Mtlite
 # bug fix:  28-Mar-2015: Fixes a bug introduced on the 20-Mar-2015 relating to 
 #                        Markdown lists not being converted to HTML 
@@ -102,15 +105,35 @@ class Martile
     #s10 = apply_filter(s9) {|x| section x }
     s10 = apply_filter(s9) {|x| mtlite_utils x }        
     s11 = section s10
+    s12 = apply_filter(s11){|x| audiotag x}
+    s13 = apply_filter(s12){|x| videotag x}
     
 
 
     #puts 's8 : ' + s8.inspect
 
-    @to_html = s11
+    @to_html = s13
   end
 
   private
+  
+  def audiotag(s)
+    
+    s.gsub(/\B!a\[\]\((https?:\/\/[^\)]+)\)\B/) do |x|
+      
+      files = ($1).split
+
+      h = {/\.ogg$/ => 'ogg', /\.wav$/ => 'wav', /\.mp3$/ => 'mp3' }
+
+      sources = files.map do |file|
+        type = h.detect{|k,v| file[k] }.last
+        "  <source src='%s' type='audio/%s'/>" % [file, type]
+      end
+
+      "<audio controls='controls'>\n%s\n</audio>" % [sources.join("\n")]
+    end    
+
+  end    
 
   def code_block_to_html(s)
 
@@ -243,6 +266,8 @@ class Martile
     #                         and [x] with a unicode checked checkbox
     s2 = s.gsub(/\s\[\s*\]\s/,' &#9744; ').gsub(/\s\[x\]\s/,' &#9745; ')
  
+    # create domain labels for hyperlinks
+    #
     s3 = s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
       next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
@@ -349,4 +374,24 @@ class Martile
     a2.join
   end
   
+  def videotag(s)
+    
+    s.gsub(/\B!v\[\]\((https?:\/\/[^\)]+)\)\B/) do |x|
+      
+      files = ($1).split
+
+      h = {
+        /\.og[gv]$/ => 'ogg', /\.mp4$/ => 'mp4', /\.mov$/ => 'mov', 
+        /\.webm$/ => 'webm' 
+      }
+
+      sources = files.map do |file|
+        type = h.detect{|k,v| file[k] }.last
+        "  <source src='%s' type='video/%s'/>" % [file, type]
+      end
+
+      "<video controls='controls'>\n%s\n</video>" % [sources.join("\n")]
+    end    
+  
+  end
 end
