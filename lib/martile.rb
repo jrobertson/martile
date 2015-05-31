@@ -267,22 +267,16 @@ class Martile
     # replaces a [] with a unicode checkbox, 
     #                         and [x] with a unicode checked checkbox
     s2 = s.gsub(/\s\[\s*\]\s/,' &#9744; ').gsub(/\s\[x\]\s/,' &#9745; ')
- 
-    s3 = if @ignore_domain_label.nil? then
     
-      # create domain labels for hyperlinks
-      #
-      s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
+    # create domain labels for hyperlinks
+    #
+    s3 =  s2.gsub(/(?:^\[|\s\[)[^\]]+\]\((https?:\/\/[^\s]+)/) do |x|
 
-        next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
-        
-        a = x[/https?:\/\/([^\/]+)/,1].split(/\./)
-        r = a.length >= 3 ? a[1..-1] :  a
-        "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
-      end
-      
-    else
-      s2
+      next x if @ignore_domainlabel and x[/#{@ignore_domainlabel}/]
+
+      a = x[/https?:\/\/([^\/]+)/,1].split(/\./)
+      r = a.length >= 3 ? a[1..-1] :  a
+      "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
     end
 
     # add strikethru to completed items
@@ -363,8 +357,7 @@ class Martile
           list = r.pop
           r << ["%s%s</section>" % 
                  [list[0], \
-                  RDiscount.new(Martile.new(list[1..-1].join, \
-                                   ignore_domainlabel: true).to_html).to_html
+                  RDiscount.new(list[1..-1].join).to_html
                  ]
                ]
           r << []
