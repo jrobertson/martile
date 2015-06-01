@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+#           01-Jun-2015  re-applied yesterday's feature which I 
+#                        removed shortly afterwards
 # feature:  31-May-2015: Transforms a kind-of markdown URL to an audio tag 
 #    e.g. !a[](http://someurl) transforms to ). Transforms a kind-of 
 #   markdown URL to an video tag e.g. !v[](http://someurl) transforms to )
@@ -204,7 +206,9 @@ class Martile
 
         raw_list = s2[1..-2].split(/^#{symbol}/).reject(&:empty?).map(&:strip)
         list = "<#{tag}>%s</#{tag}>" % raw_list.map {|x| \
-                    "<li>%s</li>" % RDiscount.new(x).to_html[/<p>(.*)<\/p>/,1]}.join
+                    "<li>%s</li>" % RDiscount.new(Martile.new(x, \
+                  ignore_domainlabel: @ignore_domainlabel).to_html)\
+                                             .to_html[/<p>(.*)<\/p>/,1]}.join
         list + remainder.to_s
         
       else
