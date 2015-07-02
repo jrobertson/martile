@@ -8,8 +8,9 @@ require 'dynarex'
 require 'rdiscount'
 
 
-# feature:  02-Jul-2015  The shorthand !i[]() can now render an iframe tag 
-#                        e.g. !i[](http://somefile.url/sometext.txt)
+# feature:  02-Jul-2015  Apply_filter() now filters out pre and code tags
+#                        The shorthand !i[]() can now render an iframe tag 
+#                        e.g. !i[](http://somefile.url/sometext.txt)                        
 # feature:  19-Jun-2015  Now uses github flavoured markdown to style the table
 #           01-Jun-2015  re-applied yesterday's feature which I 
 #                        removed shortly afterwards
@@ -269,15 +270,17 @@ class Martile
 
   end  
 
-  def apply_filter(s, names=[], &block)
-
-    Rexle.new("<root>#{s}</root>").root.map do |x|  
+  def apply_filter(s, names=%w(pre code), &block)
+    
+    doc = Rexle.new("<root>#{s}</root>")
+    #puts 'doc : ' + doc.root.xml(pretty: true).inspect
+    doc.root.map do |x|  
 
       if x.is_a?(String) then
         block.call(x)
       else
         
-        if names.grep  x.name then
+        if not names.grep  x.name then
           block.call(x.xml pretty: false)
         else
           x
