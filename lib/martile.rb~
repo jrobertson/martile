@@ -8,6 +8,7 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  19-Jun-2015  Now uses github flavoured markdown to style the table
 #           01-Jun-2015  re-applied yesterday's feature which I 
 #                        removed shortly afterwards
 # feature:  31-May-2015: Transforms a kind-of markdown URL to an audio tag 
@@ -179,7 +180,7 @@ class Martile
 
   end
   
-  def dynarex_to_table(s)
+  def dynarex_to_table2(s)
 
     s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\]/) do |match|
       
@@ -188,6 +189,39 @@ class Martile
       '[' + dynarex.to_h.map{|x| escape(x.values.join('|')) + "\n"}.join('|').chomp + ']'
     end
   end
+  
+  def dynarex_to_table(s)
+
+    s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\]/) do |match|
+            
+      print_row = -> (row, widths) do
+        '| ' + row.map.with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
+      end
+
+      print_thline = -> (row, widths) do
+        '|:' + row.map.with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
+      end
+
+      print_rows = -> (rows, widths) do
+        rows.map {|x| print_row.call(x,widths)}.join
+      end
+
+      dx = Dynarex.new($1)
+      keys = dx.to_h.map(&:keys).first
+
+      vals = dx.to_h.map(&:values)
+
+      widths = ([keys] + vals).transpose.map{|x| x.max_by(&:length).length}
+      th = '|' + keys.join('|') + "|\n"
+      th = print_row.call(keys, widths)
+      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
+
+      tb = print_rows.call(vals, widths)
+      table = th + th_line + tb
+
+    end
+  end
+    
   
   def escape(s)
     s.gsub('<','&lt;').gsub('>','&gt;')

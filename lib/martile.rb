@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  02-Jul-2015  The shorthand !i[]() can now render an iframe tag 
+#                        e.g. !i[](http://somefile.url/sometext.txt)
 # feature:  19-Jun-2015  Now uses github flavoured markdown to style the table
 #           01-Jun-2015  re-applied yesterday's feature which I 
 #                        removed shortly afterwards
@@ -112,12 +114,13 @@ class Martile
     s11 = section s10
     s12 = apply_filter(s11){|x| audiotag x}
     s13 = apply_filter(s12){|x| videotag x}
+    s14 = apply_filter(s13){|x| iframetag x}
     
 
 
     #puts 's8 : ' + s8.inspect
 
-    @to_html = s13
+    @to_html = s14
   end
 
   private
@@ -225,7 +228,18 @@ class Martile
   
   def escape(s)
     s.gsub('<','&lt;').gsub('>','&gt;')
-  end  
+  end
+  
+  def iframetag(s)
+    
+    s.gsub(/\B!i\[\]\((https?:\/\/[^\)]+)\)\B/) do |x|
+      
+      url = ($1)
+
+      "<iframe src='%s'></iframe>" % [url]
+    end    
+
+  end      
 
   def list_to_html(s,symbol='#')
 
