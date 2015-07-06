@@ -231,7 +231,7 @@ class Martile
 
             a = domain.split('.')
             a.shift if a.length > 2
-            url_title = (a.join + path)[0..39] + '...'
+            url_title = (a.join('.') + path)[0..39] + '...'
 
             "[%s](%s)" % [url_title, col]
           else
