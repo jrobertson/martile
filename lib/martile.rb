@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  06-Jul-2015  dynarex_to_table(): A URL within a 
+#                        col is now hyperlinked
 # feature:  02-Jul-2015  Apply_filter() now filters out pre and code tags
 #                        The shorthand !i[]() can now render an iframe tag 
 #                        e.g. !i[](http://somefile.url/sometext.txt)                        
@@ -213,7 +215,32 @@ class Martile
       dx = Dynarex.new($1)
       keys = dx.to_h.map(&:keys).first
 
-      vals = dx.to_h.map(&:values)
+      raw_vals = dx.to_h.map(&:values)
+      
+      # create Markdown hyperlinks for any URLs
+      
+      vals = raw_vals.map do |row|
+
+        row.map do |col|
+
+          found_match = col.match(/https?:\/\/([^\/]+)(.*)/)
+
+          r = if found_match then
+
+            domain, path = found_match.captures
+
+            a = domain.split('.')
+            a.shift if a.length > 2
+            url_title = (a.join + path)[0..39] + '...'
+
+            "[%s](%s)" % [url_title, col]
+          else
+            col
+          end
+          
+          r
+        end
+      end      
 
       widths = ([keys] + vals).transpose.map{|x| x.max_by(&:length).length}
       th = '|' + keys.join('|') + "|\n"
