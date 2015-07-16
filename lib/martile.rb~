@@ -8,8 +8,9 @@ require 'dynarex'
 require 'rdiscount'
 
 
-# feature:  06-Jul-2015  dynarex_to_table(): A URL within a 
-#                        col is now hyperlinked
+# feature:  06-Jul-2015  dynarex_to_table(): 
+#                        1. A URL within a  col is now hyperlinked
+#                        2. Select fields can now be displayd
 # feature:  02-Jul-2015  Apply_filter() now filters out pre and code tags
 #                        The shorthand !i[]() can now render an iframe tag 
 #                        e.g. !i[](http://somefile.url/sometext.txt)                        
@@ -198,24 +199,36 @@ class Martile
   
   def dynarex_to_table(s)
 
-    s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\]/) do |match|
-            
+    s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\](\{[^\}]+\})?/) do |match|
+
+      source = ($1)
+      raw_select = ($3)
+      
+      if raw_select then
+        raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
+        fields = raw_fields.split(/\s*,\s*/)        
+      end
+      
       print_row = -> (row, widths) do
-        '| ' + row.map.with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
+        '| ' + row.map\
+            .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
       end
 
       print_thline = -> (row, widths) do
-        '|:' + row.map.with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
+        '|:' + row.map\
+            .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
       end
 
       print_rows = -> (rows, widths) do
         rows.map {|x| print_row.call(x,widths)}.join
       end
 
-      dx = Dynarex.new($1)
-      keys = dx.to_h.map(&:keys).first
+      dx = Dynarex.new(source)
 
-      raw_vals = dx.to_h.map(&:values)
+      flat_records = raw_select ? dx.to_a(select: fields) : dx.to_a
+      
+      keys = flat_records.map(&:keys).first
+      raw_vals = flat_records.map(&:values)
       
       # create Markdown hyperlinks for any URLs
       
@@ -276,7 +289,9 @@ class Martile
 
     s.split(/(?=\[#{symbol}|^#{symbol*2})/).map do |x|
       
-      s2, remainder = [x[/\[#{symbol}.*#{symbol}[^\]]+\]/m], ($').to_s] if x.strip.length > 0
+      if x.strip.length > 0 then
+        s2, remainder = [x[/\[#{symbol}.*#{symbol}[^\]]+\]/m], ($').to_s]
+      end
       
       if s2 then
 
