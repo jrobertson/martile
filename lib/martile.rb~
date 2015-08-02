@@ -8,6 +8,9 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# improvement: 
+#           16-Jul-2015  to_s is now equivalent to_html; to_s is 
+#                        more readable when it's just text which is returned
 # feature:  06-Jul-2015  dynarex_to_table(): 
 #                        1. A URL within a  col is now hyperlinked
 #                        2. Select fields can now be displayd
@@ -86,7 +89,7 @@ require 'rdiscount'
 
 class Martile
 
-  attr_reader :to_html
+  attr_reader :to_s
 
   def initialize(raw_s, ignore_domainlabel: nil)
     
@@ -120,11 +123,13 @@ class Martile
     s13 = apply_filter(s12){|x| videotag x}
     s14 = apply_filter(s13){|x| iframetag x}
     
-
-
     #puts 's8 : ' + s8.inspect
 
-    @to_html = s14
+    @to_s = s14
+  end
+  
+  def to_html()
+    @to_s
   end
 
   private

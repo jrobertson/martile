@@ -8,10 +8,13 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  02-Aug-2015  dynarex_to_table() is now know as dynarex_to_markdown()
+#                        A markdown list will be rendered from a Dynarex 
+#                        document if there is only a single field column
 # improvement: 
 #           16-Jul-2015  to_s is now equivalent to_html; to_s is 
 #                        more readable when it's just text which is returned
-# feature:  06-Jul-2015  dynarex_to_table(): 
+# feature:  06-Jul-2015  dynarex_to_markdown(): 
 #                        1. A URL within a  col is now hyperlinked
 #                        2. Select fields can now be displayd
 # feature:  02-Jul-2015  Apply_filter() now filters out pre and code tags
@@ -79,12 +82,12 @@ require 'rdiscount'
 # feature:  12-Aug-2013: unordered_list supported
 # feature:  31-Mar-2013: markdown inside a martile ordered list
 #                          is now converted to HTML
-# bug fix:  02-Nov-2012: within dynarex_to_table URLs containing a 
+# bug fix:  02-Nov-2012: within dynarex_to_markdown URLs containing a 
 #                        dash now work
 # bug fix:  20-Sep-2012: in ordered_list_to_html it now cuts off from 
 #                        parsing headings
 # bug fix:  04-Aug-2012; replaced \s with a space in regex patterns
-# modified: 28-Mar-2012; Added dynarex_to_table
+# modified: 28-Mar-2012; Added dynarex_to_markdown
 # modified: 28-Aug-2011; Added escaping of HTML within a code block
 
 class Martile
@@ -108,7 +111,7 @@ class Martile
     s5 = apply_filter(s4) {|x| unordered_list_to_html x }
     #puts 's5 : ' + s5.inspect
 
-    s6 = apply_filter(s5) {|x| dynarex_to_table x }
+    s6 = apply_filter(s5) {|x| dynarex_to_markdown x }
     #puts 's6 :' + s6.inspect
 
     s7 = apply_filter(s6) {|x| table_to_html x }
@@ -192,7 +195,7 @@ class Martile
 
   end
   
-  def dynarex_to_table2(s)
+  def dynarex_to_markdown2(s)
 
     s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\]/) do |match|
       
@@ -202,72 +205,19 @@ class Martile
     end
   end
   
-  def dynarex_to_table(s)
+  def dynarex_to_markdown(s)
 
     s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\](\{[^\}]+\})?/) do |match|
 
       source = ($1)
       raw_select = ($3)
-      
-      if raw_select then
-        raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
-        fields = raw_fields.split(/\s*,\s*/)        
+      dx = Dynarex.new(source)      
+
+      if dx.fields.length > 1 then
+        dx_render_table(source, raw_select)
+      else
+        dx.records.keys.map {|x| '* ' + x}.join("\n")
       end
-      
-      print_row = -> (row, widths) do
-        '| ' + row.map\
-            .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
-      end
-
-      print_thline = -> (row, widths) do
-        '|:' + row.map\
-            .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
-      end
-
-      print_rows = -> (rows, widths) do
-        rows.map {|x| print_row.call(x,widths)}.join
-      end
-
-      dx = Dynarex.new(source)
-
-      flat_records = raw_select ? dx.to_a(select: fields) : dx.to_a
-      
-      keys = flat_records.map(&:keys).first
-      raw_vals = flat_records.map(&:values)
-      
-      # create Markdown hyperlinks for any URLs
-      
-      vals = raw_vals.map do |row|
-
-        row.map do |col|
-
-          found_match = col.match(/https?:\/\/([^\/]+)(.*)/)
-
-          r = if found_match then
-
-            domain, path = found_match.captures
-
-            a = domain.split('.')
-            a.shift if a.length > 2
-            url_title = (a.join('.') + path)[0..39] + '...'
-
-            "[%s](%s)" % [url_title, col]
-          else
-            col
-          end
-          
-          r
-        end
-      end      
-
-      widths = ([keys] + vals).transpose.map{|x| x.max_by(&:length).length}
-      th = '|' + keys.join('|') + "|\n"
-      th = print_row.call(keys, widths)
-      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
-
-      tb = print_rows.call(vals, widths)
-      table = th + th_line + tb
-
     end
   end
     
@@ -392,6 +342,68 @@ class Martile
   def ordered_list_to_html(s)
     list_to_html s, '#'
   end
+  
+  def dx_render_table()
+    
+      if raw_select then
+        raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
+        fields = raw_fields.split(/\s*,\s*/)        
+      end
+      
+      print_row = -> (row, widths) do
+        '| ' + row.map\
+            .with_index {|y,i| y.to_s.ljust(widths[i])}.join(' | ') + " |\n"
+      end
+
+      print_thline = -> (row, widths) do
+        '|:' + row.map\
+            .with_index {|y,i| y.to_s.ljust(widths[i])}.join('|:') + "|\n"
+      end
+
+      print_rows = -> (rows, widths) do
+        rows.map {|x| print_row.call(x,widths)}.join
+      end
+
+
+
+      flat_records = raw_select ? dx.to_a(select: fields) : dx.to_a
+      
+      keys = flat_records.map(&:keys).first
+      raw_vals = flat_records.map(&:values)
+      
+      # create Markdown hyperlinks for any URLs
+      
+      vals = raw_vals.map do |row|
+
+        row.map do |col|
+
+          found_match = col.match(/https?:\/\/([^\/]+)(.*)/)
+
+          r = if found_match then
+
+            domain, path = found_match.captures
+
+            a = domain.split('.')
+            a.shift if a.length > 2
+            url_title = (a.join('.') + path)[0..39] + '...'
+
+            "[%s](%s)" % [url_title, col]
+          else
+            col
+          end
+          
+          r
+        end
+      end      
+
+      widths = ([keys] + vals).transpose.map{|x| x.max_by(&:length).length}
+      th = '|' + keys.join('|') + "|\n"
+      th = print_row.call(keys, widths)
+      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
+
+      tb = print_rows.call(vals, widths)
+      table = th + th_line + tb
+    end
   
   def unordered_list_to_html(s)
     list_to_html s, '\*'
