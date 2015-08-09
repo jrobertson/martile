@@ -6,6 +6,7 @@
 #require 'rexle'
 require 'dynarex'
 require 'rdiscount'
+require 'kvx'
 
 
 # feature:  09-Aug-2015  kvx_to_dl() can convert a kind of 
