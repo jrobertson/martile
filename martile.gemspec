@@ -1,11 +1,12 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
-  s.version = '0.6.8'
+  s.version = '0.6.9'
   s.summary = 'A flavour of Markdown which converts a Martile string to html'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
   s.add_runtime_dependency('rdiscount', '~> 2.1', '>=2.1.8')
   s.add_runtime_dependency('dynarex', '~> 1.5', '>=1.5.26')
+  s.add_runtime_dependency('kvx', '~> 0.5', '>=0.5.8')
   s.signing_key = '../privatekeys/martile.pem'
   s.cert_chain  = ['gem-public_cert.pem']
   s.license = 'MIT'

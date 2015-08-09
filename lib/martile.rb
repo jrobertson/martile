@@ -8,6 +8,8 @@ require 'dynarex'
 require 'rdiscount'
 
 
+# feature:  09-Aug-2015  kvx_to_dl() can convert a kind of 
+#                        markdown URL to a DL HTML list
 # feature:  02-Aug-2015  dynarex_to_table() is now know as dynarex_to_markdown()
 #                        A markdown list will be rendered from a Dynarex 
 #                        document if there is only a single field column
@@ -125,10 +127,11 @@ class Martile
     s12 = apply_filter(s11){|x| audiotag x}
     s13 = apply_filter(s12){|x| videotag x}
     s14 = apply_filter(s13){|x| iframetag x}
+    s15 = apply_fileter(s14){|x| kvx_to_dl x}
     
     #puts 's8 : ' + s8.inspect
 
-    @to_s = s14
+    @to_s = s15
   end
   
   def to_html()
@@ -220,7 +223,22 @@ class Martile
       end
     end
   end
-    
+
+  def kvx_to_dl(s)
+
+    s.gsub(/:(\[.*\])\(((?:https?:\/\/)?[\w\/\.\-]+)\)?/) do |match|
+
+      source = ($1)
+      raw_select = ($2)
+      h = Kvx.new(raw_select).body
+
+      a = h.map do |k,v|
+        "<dt>%s</dt><dd>%s</dd>" % [k,v]
+      end
+      "<dl>" + a.join("\n") + "</dl>"
+    end
+
+  end
   
   def escape(s)
     s.gsub('<','&lt;').gsub('>','&gt;')
@@ -235,7 +253,9 @@ class Martile
       "<iframe src='%s'></iframe>" % [url]
     end    
 
-  end      
+  end
+  
+  
 
   def list_to_html(s,symbol='#')
 
