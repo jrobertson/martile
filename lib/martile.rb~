@@ -128,7 +128,7 @@ class Martile
     s12 = apply_filter(s11){|x| audiotag x}
     s13 = apply_filter(s12){|x| videotag x}
     s14 = apply_filter(s13){|x| iframetag x}
-    s15 = apply_fileter(s14){|x| kvx_to_dl x}
+    s15 = apply_filter(s14){|x| kvx_to_dl x}
     
     #puts 's8 : ' + s8.inspect
 

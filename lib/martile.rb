@@ -9,6 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  17-Aug-2015  dx_render_table() was missing a couple of parameters
 # feature:  09-Aug-2015  kvx_to_dl() can convert a kind of 
 #                        markdown URL to a DL HTML list
 # feature:  02-Aug-2015  dynarex_to_table() is now know as dynarex_to_markdown()
@@ -218,7 +219,7 @@ class Martile
       dx = Dynarex.new(source)      
 
       if dx.fields.length > 1 then
-        dx_render_table(source, raw_select)
+        dx_render_table(dx, raw_select)
       else
         dx.records.keys.map {|x| '* ' + x}.join("\n")
       end
@@ -364,7 +365,7 @@ class Martile
     list_to_html s, '#'
   end
   
-  def dx_render_table()
+  def dx_render_table(dx, raw_select)
     
       if raw_select then
         raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
