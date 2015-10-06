@@ -9,6 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  06-Oct-2015  Can now handle multiple smart links on the same line
 # bug fix:  17-Aug-2015  dx_render_table() was missing a couple of parameters
 # feature:  09-Aug-2015  kvx_to_dl() can convert a kind of 
 #                        markdown URL to a DL HTML list
@@ -464,10 +465,14 @@ class Martile
   end
   
   def smartlink(s)
-    
-    s.gsub(/\B\?([^\n]+) +(https?:\/\/.*\?)(?=\B)/) do
-      "[%s](%s)" % [$1, ($2).chop]
-    end
+        
+    s.split(/(?= \?)/).inject('') do |r, substring|
+
+      r << substring.gsub(/\B\?([^\n]+) +(https?:\/\/.[^\?]+\?)(?=\B)/) do |x|
+        "[%s](%s)" % [$1, ($2).chop]
+      end
+      
+    end    
 
   end  
   
