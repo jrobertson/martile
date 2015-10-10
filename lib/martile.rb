@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:  10-Oct-2015  A hyperlink can now be create from a 
+#                        list item containing a URL
 # bug fix:  06-Oct-2015  Can now handle multiple smart links on the same line
 # bug fix:  17-Aug-2015  dx_render_table() was missing a couple of parameters
 # feature:  09-Aug-2015  kvx_to_dl() can convert a kind of 
@@ -125,16 +127,18 @@ class Martile
     s8 = apply_filter(s7) {|x| underline x }
     s9 = apply_filter(s8) {|x| smartlink x }
     #s10 = apply_filter(s9) {|x| section x }
-    s10 = apply_filter(s9) {|x| mtlite_utils x }        
-    s11 = section s10
+
+    s11 = section s9
     s12 = apply_filter(s11){|x| audiotag x}
     s13 = apply_filter(s12){|x| videotag x}
     s14 = apply_filter(s13){|x| iframetag x}
     s15 = apply_filter(s14){|x| kvx_to_dl x}
+    s16 = apply_filter(s15){|x| list_item_to_hyperlink x}
+    s10 = apply_filter(s16) {|x| mtlite_utils x }        
     
     #puts 's8 : ' + s8.inspect
 
-    @to_s = s15
+    @to_s = s10
   end
   
   def to_html()
@@ -483,6 +487,8 @@ class Martile
     
   end
   
+  # makes HTML sections out of string blocks which start with an 
+  # equals sign and end with an equals sign
   def section(s)
 
     a = s.lines
@@ -540,4 +546,10 @@ class Martile
     end    
   
   end
+  
+  def list_item_to_hyperlink(s)
+        
+    s.gsub(/\B*( +)([^\n]+)\s+(https?:\/\/.*)/,'\1[\2](\3)')
+
+  end    
 end
