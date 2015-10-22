@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  22-Oct-2015  The method apply_filter() is now used 
+#                                                 with the section() method
 # feature:  10-Oct-2015  A hyperlink can now be create from a 
 #                        list item containing a URL
 # bug fix:  06-Oct-2015  Can now handle multiple smart links on the same line
@@ -125,14 +127,21 @@ class Martile
     #puts 's7 : ' + s7.inspect
 
     s8 = apply_filter(s7) {|x| underline x }
+    #puts 's8: ' + s8.inspect
     s9 = apply_filter(s8) {|x| smartlink x }
-    #s10 = apply_filter(s9) {|x| section x }
+    s11 = apply_filter(s9) {|x| section x }
+    #puts 's9: ' + s9.inspect
 
-    s11 = section s9
-    s12 = apply_filter(s11){|x| audiotag x}
+    #s11 = section s9
+    puts 's11 : ' + s11.inspect
+    s12 = apply_filter(s11){|x| puts 'audio:'; audiotag x}
+    puts 's12 : ' + s12.inspect
     s13 = apply_filter(s12){|x| videotag x}
+    puts 's13 : ' + s13.inspect
     s14 = apply_filter(s13){|x| iframetag x}
+    puts 's14 : ' + s14.inspect
     s15 = apply_filter(s14){|x| kvx_to_dl x}
+    puts 's15 : ' + s15.inspect
     s16 = apply_filter(s15){|x| list_item_to_hyperlink x}
     s10 = apply_filter(s16) {|x| mtlite_utils x }        
     
