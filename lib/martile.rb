@@ -11,8 +11,6 @@ require 'kvx'
 
 # bug fix:  22-Oct-2015  The method apply_filter() is now used 
 #                                                 with the section() method
-#                        When parsing a code block a new line character on its 
-#                          own line is now checked for as well as the 4 spaces.
 # feature:  10-Oct-2015  A hyperlink can now be create from a 
 #                        list item containing a URL
 # bug fix:  06-Oct-2015  Can now handle multiple smart links on the same line
@@ -185,7 +183,7 @@ class Martile
         
         b =[]
 
-        while s2 =~ /^ {4}|\n/ do
+        while s2 =~ /^ {4}/ do
 
           a = s2.lines.to_a
           r = a.take_while{|x| x[/^( {4}|\n)/]}
