@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  03-Dec-2015  A smartlink which ends with a closing parenthesis is 
+#                          now output to a regular anchor tag
 # bug fix:  22-Oct-2015  The method apply_filter() is now used 
 #                                                 with the section() method
 # feature:  10-Oct-2015  A hyperlink can now be create from a 
@@ -482,7 +484,14 @@ class Martile
     s.split(/(?= \?)/).inject('') do |r, substring|
 
       r << substring.gsub(/\B\?([^\n]+) +(https?:\/\/.[^\?]+\?)(?=\B)/) do |x|
-        "[%s](%s)" % [$1, ($2).chop]
+        
+        content, link = $1, ($2).chop
+        
+        if (link)[/\)$/] then
+          "<a href='%s'>%s</a>" % [link, content]
+        else
+          "[%s](%s)" % [content, link]
+        end
       end
       
     end    
