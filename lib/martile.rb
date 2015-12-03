@@ -11,6 +11,8 @@ require 'kvx'
 
 # bug fix:  03-Dec-2015  A smartlink which ends with a closing parenthesis is 
 #                          now output to a regular anchor tag
+#                        It should now identify when using a section equals sign
+#                        to terminate a section block
 # bug fix:  22-Oct-2015  The method apply_filter() is now used 
 #                                                 with the section() method
 # feature:  10-Oct-2015  A hyperlink can now be create from a 
@@ -513,6 +515,7 @@ class Martile
 
     a2 = a.inject([[]]) do |r,x|
 
+
       match = x.match(/^=[^=]#?(\w+)?/)
 
       if match then
@@ -540,6 +543,7 @@ class Martile
 
       r
     end
+
 
     a2.join
   end
