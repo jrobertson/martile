@@ -13,6 +13,8 @@ require 'kvx'
 #                          now output to a regular anchor tag
 #                        It should now identify when using a section equals sign
 #                        to terminate a section block
+#                        The content of a section block can now be processed 
+#                           using the Martile object recursively
 # bug fix:  22-Oct-2015  The method apply_filter() is now used 
 #                                                 with the section() method
 # feature:  10-Oct-2015  A hyperlink can now be create from a 
@@ -132,13 +134,14 @@ class Martile
 
     s8 = apply_filter(s7) {|x| underline x }
     #puts 's8: ' + s8.inspect
-    s9 = apply_filter(s8) {|x| smartlink x }
-    s11 = apply_filter(s9) {|x| section x }
+    s9 = apply_filter(s8) {|x| section x }    
+    s10 = apply_filter(s9) {|x| smartlink x }
+
     #puts 's9: ' + s9.inspect
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
-    s12 = apply_filter(s11){|x| audiotag x}
+    s12 = apply_filter(s10){|x| audiotag x}
     #puts 's12 : ' + s12.inspect
     s13 = apply_filter(s12){|x| videotag x}
     #puts 's13 : ' + s13.inspect
@@ -515,8 +518,7 @@ class Martile
 
     a2 = a.inject([[]]) do |r,x|
 
-
-      match = x.match(/^=[^=]#?(\w+)?/)
+      match = x.match(/^={1}(?:#)?(\w+)?$/)
 
       if match then
 
@@ -525,7 +527,7 @@ class Martile
           list = r.pop
           r << ["%s%s</section>" % 
                  [list[0], \
-                  RDiscount.new(list[1..-1].join).to_html
+                  RDiscount.new(Martile.new(list[1..-1].join).to_html).to_html
                  ]
                ]
           r << []
@@ -543,7 +545,6 @@ class Martile
 
       r
     end
-
 
     a2.join
   end
