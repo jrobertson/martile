@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  04-Dec-2015  apply_filter() now masks over <pre> tags rather 
+#                        splitting them and passing them to the block
 # bug fix:  03-Dec-2015  A smartlink which ends with a closing parenthesis is 
 #                          now output to a regular anchor tag
 #                        It should now identify when using a section equals sign
@@ -118,9 +120,9 @@ class Martile
     s2 = code_block_to_html(s.strip + "\n")
 
     #puts 's2 : ' + s2.inspect
-    s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
+    #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
     #puts 's3 : ' + s3.inspect
-    s4 = apply_filter(s3) {|x| ordered_list_to_html x }
+    s4 = apply_filter(s2) {|x| ordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
 
     s5 = apply_filter(s4) {|x| unordered_list_to_html x }
@@ -310,25 +312,27 @@ class Martile
 
   end  
 
-  def apply_filter(s, names=%w(pre code), &block)
-    
-    doc = Rexle.new("<root>#{s}</root>")
-    #puts 'doc : ' + doc.root.xml(pretty: true).inspect
-    doc.root.map do |x|  
+  
+  def apply_filter(s, names=%w(pre code), &blk)
 
-      if x.is_a?(String) then
-        block.call(x)
+    s.split(/(?=<pre)/).map do |row|
+      separator = "\n1449232851\n"
+      upper = row[/.*(?=<pre>)/m]
+      lower = row[/<\/pre>(.*)/m,1]
+      pre = row[/<pre>.*<\/pre>/m]
+
+      if pre then
+
+        s2 = blk.call [upper,lower].join(separator)
+
+        s2.split(separator, 2).insert(1, pre).join
       else
-        
-        if not names.grep  x.name then
-          block.call(x.xml pretty: false)
-        else
-          x
-        end   
-        
-      end      
+        blk.call row
+      end
     end.join
+    
   end
+  
   
   def explicit_list_to_html(s)
 
