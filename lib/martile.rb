@@ -9,7 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
-# bug fix:  04-Dec-2015  apply_filter() now masks over <pre> tags rather 
+# bug fix:  04-Dec-2015  apply_filter() now masks over <pre> tags rather than
 #                        splitting them and passing them to the block
 # bug fix:  03-Dec-2015  A smartlink which ends with a closing parenthesis is 
 #                          now output to a regular anchor tag
