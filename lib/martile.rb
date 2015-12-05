@@ -9,6 +9,10 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  05-Dec-2015  PRE tags are now correctly filtered out using the 
+#                        apply_filter() method.
+#                        the ignore_domainlabel keword is now supplied to the 
+#                        Martile.new statement within the section() method
 # bug fix:  04-Dec-2015  apply_filter() now masks over <pre> tags rather than
 #                        splitting them and passing them to the block
 # bug fix:  03-Dec-2015  A smartlink which ends with a closing parenthesis is 
@@ -312,28 +316,35 @@ class Martile
 
   end  
 
-  
   def apply_filter(s, names=%w(pre code), &blk)
 
-    s.split(/(?=<pre)/).map do |row|
-      separator = "\n1449232851\n"
-      upper = row[/.*(?=<pre>)/m]
-      lower = row[/<\/pre>(.*)/m,1]
-      pre = row[/<pre>.*<\/pre>/m]
+    separator = "\n1449232851\n"
+    
+    a, apre = s.split(/(?=<pre)/).inject([[],[]]) do |r, row|
 
-      if pre then
+      pre = nil
 
-        s2 = blk.call [upper,lower].join(separator)
-
-        s2.split(separator, 2).insert(1, pre).join
-      else
-        blk.call row
+      s2 = row.sub(/<pre.*<\/pre>/m) do |pattern|
+        pre = pattern
+        separator
       end
-    end.join
+
+      r.first << s2
+      r.last << pre if pre
+      r    
+
+    end
+
+    r2 = blk.call a.join
+    
+    apre.compact.each do |x|
+      r2.sub!(separator, x)
+    end
+
+    r2
     
   end
-  
-  
+
   def explicit_list_to_html(s)
 
     match = s.match(/<([ou]l)>([\*#])/m)
@@ -529,9 +540,11 @@ class Martile
         if r.last.length > 0 and r.last.first[/<section/] then
 
           list = r.pop
+
           r << ["%s%s</section>" % 
                  [list[0], \
-                  RDiscount.new(Martile.new(list[1..-1].join).to_html).to_html
+                  RDiscount.new(Martile.new(list[1..-1].join, \
+                      ignore_domainlabel: @ignore_domainlabel).to_html).to_html
                  ]
                ]
           r << []
