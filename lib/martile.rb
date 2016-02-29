@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  29-Feb-2016  Arbitrary URLs will no longer automatically 
+#                        be hyperlinked
 # bug fix:  05-Dec-2015  PRE tags are now correctly filtered out using the 
 #                        apply_filter() method.
 #                        the ignore_domainlabel keword is now supplied to the 
@@ -141,9 +143,11 @@ class Martile
     s8 = apply_filter(s7) {|x| underline x }
     #puts 's8: ' + s8.inspect
     s9 = apply_filter(s8) {|x| section x }    
+    #puts 's9: ' + s9.inspect
+    
     s10 = apply_filter(s9) {|x| smartlink x }
 
-    #puts 's9: ' + s9.inspect
+    #puts 's10: ' + s10.inspect
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
@@ -156,11 +160,12 @@ class Martile
     s15 = apply_filter(s14){|x| kvx_to_dl x}
     #puts 's15 : ' + s15.inspect
     s16 = apply_filter(s15){|x| list_item_to_hyperlink x}
-    s10 = apply_filter(s16) {|x| mtlite_utils x }        
+    #puts 's16 : ' + s16.inspect
+    s17 = apply_filter(s16) {|x| mtlite_utils x }        
     
-    #puts 's8 : ' + s8.inspect
+    #puts 's17 : ' + s17.inspect
 
-    @to_s = s10
+    @to_s = s17
   end
   
   def to_html()
@@ -386,7 +391,7 @@ class Martile
 
       a = x[/https?:\/\/([^\/]+)/,1].split(/\./)
       r = a.length >= 3 ? a[1..-1] :  a
-      "%s<span class='domain'>[%s]</span>" % [x, r.join('.')]
+      "%s <span class='domain'>[%s]</span>" % [x, r.join('.')]
     end
 
     # add strikethru to completed items
@@ -589,7 +594,7 @@ class Martile
   
   def list_item_to_hyperlink(s)
         
-    s.gsub(/\B*( +)([^\n]+)\s+(https?:\/\/.*)/,'\1[\2](\3)')
+    s.gsub(/\B\*( +)([^\n]+)\s+(https?:\/\/.*)/,'\1[\2](\3)')
 
   end    
 end
