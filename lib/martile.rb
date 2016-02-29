@@ -594,7 +594,7 @@ class Martile
   
   def list_item_to_hyperlink(s)
         
-    s.gsub(/\B\*( +)([^\n]+)\s+(https?:\/\/.*)/,'\1[\2](\3)')
+    s.gsub(/\B(\* +)([^\n]+)\s+(https?:\/\/.*)/,'\1[\2](\3)')
 
   end    
 end
