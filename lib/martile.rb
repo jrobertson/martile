@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# improvement: 9-Mar-2016 Method dynarex_to_markdown now uses the !d[]() 
+#                        syntax instead of -[]
 # bug fix:  29-Feb-2016  Arbitrary URLs will no longer automatically 
 #                        be hyperlinked
 # bug fix:  05-Dec-2015  PRE tags are now correctly filtered out using the 
@@ -143,11 +145,11 @@ class Martile
     s8 = apply_filter(s7) {|x| underline x }
     #puts 's8: ' + s8.inspect
     s9 = apply_filter(s8) {|x| section x }    
-    #puts 's9: ' + s9.inspect
+    puts 's9: ' + s9.inspect
     
     s10 = apply_filter(s9) {|x| smartlink x }
 
-    #puts 's10: ' + s10.inspect
+    puts 's10: ' + s10.inspect
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
@@ -160,10 +162,10 @@ class Martile
     s15 = apply_filter(s14){|x| kvx_to_dl x}
     #puts 's15 : ' + s15.inspect
     s16 = apply_filter(s15){|x| list_item_to_hyperlink x}
-    #puts 's16 : ' + s16.inspect
+    puts 's16 : ' + s16.inspect
     s17 = apply_filter(s16) {|x| mtlite_utils x }        
     
-    #puts 's17 : ' + s17.inspect
+    puts 's17 : ' + s17.inspect
 
     @to_s = s17
   end
@@ -244,7 +246,7 @@ class Martile
   
   def dynarex_to_markdown(s)
 
-    s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\](\{[^\}]+\})?/) do |match|
+    s.gsub(/!d\[\]\(((https?:\/\/)?[\w\/\.\-]+)\)(\{[^\}]+\})?/) do |match|
 
       source = ($1)
       raw_select = ($3)

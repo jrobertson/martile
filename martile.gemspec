@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
-  s.version = '0.6.25'
+  s.version = '0.6.26'
   s.summary = 'A flavour of Markdown which converts a Martile string to html'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
