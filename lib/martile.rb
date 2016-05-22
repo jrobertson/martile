@@ -9,6 +9,9 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:  22-May-2016  Introduced the __DATA__ section which appears at 
+#                        the end of the document to reference 1 or more raw 
+#                        Dynarex documents
 # improvement: 9-Mar-2016 Method dynarex_to_markdown now uses the !d[]() 
 #                        syntax instead of -[]
 # bug fix:  29-Feb-2016  Arbitrary URLs will no longer automatically 
@@ -54,78 +57,23 @@ require 'kvx'
 # bug fix:               The inner Martile call within a Section now 
 #  ignores domain labels to avoid duplication of URL scanning.
 # feature:  29-Mar-2015: Borrowed the strikethru feature from Mtlite
-# bug fix:  28-Mar-2015: Fixes a bug introduced on the 20-Mar-2015 relating to 
-#                        Markdown lists not being converted to HTML 
-#  see http://www.jamesrobertson.eu/bugtracker/2015/mar/28/markdown-lists-are-not-converted-to-html.html
-# improvement:           A space is now appended to the unicode checkbox to 
-#                        separate it from the text
-# feature:  21-Mar-2015: URLS are now given labels e.g.
-#          [news](http://news.bbc.co.uk)<span class='domain'>[bbc.co.uk]</span>
-# bug fix:  20-Mar-2015: HTML and XML elements should not be filtered out of 
-#                                                          the section() method
-# feature:               Added the unicode checkbox feature from the Mtlite gem
-# bug fix:  14-Mar-2015: A section can now be
-#                                        written without an error occurring
-# bug fix:  11-Mar-2015: Escapes angle brackets within a code block *before* 
-#                        the string is passed to Rexle
-# bug fix:               A new line character is now added after the creation 
-#                        of the code block tags
-# bug fix:  01-Mar-2015: code_block_to_html() now only searches strings which 
-#                        are outside of angle brackets
-# bug fix:  10-Dec-2014: Generation of pre tags using // can now only happen 
-#                        when the // appears at the beginning of the line
-# feature:  30-Oct-2014: A section can now be between a set of equal signs at 
-#                        the beginning of the line 
-#                        e.g. 
-#                        =
-#                            inside a section
-#                        =
-# bug fix:  07-Oct-2014: Smartlink tested for new cases
-# feature:  27-Sep-2014: 1. A smartlink can now be used 
-#                                               e.g. ?link http://someurl?
-#                        2. pre tags can now be created from 2 pairs of slash 
-#                           tags, before and after the pre tag content e.g.
-#                            //
-#                            testing
-#                            //
-# feature:  24-Sep-2014: A kind of markdown list can now be created inside 
-#                        of <ol> or <ul> tags
-# bug fix:  16-Apr-2014: Words containing an underscore should no longer be 
-#                        transformed to an underline tag
-# bug fix:  03-Apr-2014: XML or HTML elements should now be filtered out 
-#                        of any transformations.
-# feature:  31-Mar-2014: Added an _underline_ feature.
-# bug fix:  01-Mar-2014: A Dynarex_to_table statement between 2 HTML blocks 
-#                        is now handled properly.
-# bug fix:  01-Mar-2014: Multiple pre tags within a string can now be handled
-# feature:  12-Oct-2013: escaped the non-code content of <pre> blocks
-# feature:  04-Oct-2013: angle brackets within <pre><code> blocks are 
-#                        escaped automatically
-# feature:  03-Oct-2013: HTML tags now handled
-# bug fix:  25-Sep-2013: removed the new line statement from the join command.
-#                        headings etc. should no longer be split with a new line
-# feature:  12-Aug-2013: unordered_list supported
-# feature:  31-Mar-2013: markdown inside a martile ordered list
-#                          is now converted to HTML
-# bug fix:  02-Nov-2012: within dynarex_to_markdown URLs containing a 
-#                        dash now work
-# bug fix:  20-Sep-2012: in ordered_list_to_html it now cuts off from 
-#                        parsing headings
-# bug fix:  04-Aug-2012; replaced \s with a space in regex patterns
-# modified: 28-Mar-2012; Added dynarex_to_markdown
-# modified: 28-Aug-2011; Added escaping of HTML within a code block
+
 
 class Martile
 
-  attr_reader :to_s
+  attr_reader :to_s, :data_source
 
   def initialize(raw_s, ignore_domainlabel: nil)
     
+    @data_source = {}
+    
     @ignore_domainlabel = ignore_domainlabel
     
-    s = slashpre raw_s
+    s0 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
+    
+    s1 = slashpre s0
     #puts 's : ' + s.inspect
-    s2 = code_block_to_html(s.strip + "\n")
+    s2 = code_block_to_html(s1.strip + "\n")
 
     #puts 's2 : ' + s2.inspect
     #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
@@ -145,11 +93,11 @@ class Martile
     s8 = apply_filter(s7) {|x| underline x }
     #puts 's8: ' + s8.inspect
     s9 = apply_filter(s8) {|x| section x }    
-    puts 's9: ' + s9.inspect
+    #puts 's9: ' + s9.inspect
     
     s10 = apply_filter(s9) {|x| smartlink x }
 
-    puts 's10: ' + s10.inspect
+    #puts 's10: ' + s10.inspect
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
@@ -162,10 +110,10 @@ class Martile
     s15 = apply_filter(s14){|x| kvx_to_dl x}
     #puts 's15 : ' + s15.inspect
     s16 = apply_filter(s15){|x| list_item_to_hyperlink x}
-    puts 's16 : ' + s16.inspect
+    #puts 's16 : ' + s16.inspect
     s17 = apply_filter(s16) {|x| mtlite_utils x }        
     
-    puts 's17 : ' + s17.inspect
+    #puts 's17 : ' + s17.inspect
 
     @to_s = s17
   end
@@ -245,12 +193,17 @@ class Martile
   end
   
   def dynarex_to_markdown(s)
-
-    s.gsub(/!d\[\]\(((https?:\/\/)?[\w\/\.\-]+)\)(\{[^\}]+\})?/) do |match|
+    
+    s.gsub(/!d\[\]\(((#\w+|https?:\/\/)?[\w\/\.\-]+)\)(\{[^\}]+\})?/) do |match|
 
       source = ($1)
       raw_select = ($3)
-      dx = Dynarex.new(source)      
+
+      dx = if source =~ /^http/ then
+        Dynarex.new(source)      
+      else
+        @data_source[source[/\w+/]]
+      end
 
       if dx.fields.length > 1 then
         dx_render_table(dx, raw_select)
@@ -472,7 +425,30 @@ class Martile
   
   def unordered_list_to_html(s)
     list_to_html s, '\*'
-  end  
+  end
+
+  def parse__data__(s)
+
+    a = s.split(/^__DATA__$/,2)
+
+    data = a[-1]
+
+    data.split(/(?=<\?)/).each do |x|
+    
+      s2 = x.strip
+      next if s2.empty?
+      
+      puts 's2: ' + s2.inspect
+      id = s2.lines.first[/id=["']([^"']+)/,1]
+      dx = Dynarex.new
+      dx.import s2
+
+      @data_source[id] = dx    
+    end
+    
+    a[0..-2].join
+    
+  end
 
   def table_to_html(s)
     
