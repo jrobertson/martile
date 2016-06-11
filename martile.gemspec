@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
   s.version = '0.6.27'
-  s.summary = 'A flavour of Markdown which converts a Martile string to html'
+  s.summary = 'Martile is a Markdown pre formatter which is designed to format custom Markdown tags prior to being passed to the Markdown gem.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
   s.add_runtime_dependency('rdiscount', '~> 2.2', '>=2.2.0.1')

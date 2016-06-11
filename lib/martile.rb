@@ -9,6 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  11-Jun-2016  pre tags are now filtered out properly
 # feature:  22-May-2016  Introduced the __DATA__ section which appears at 
 #                        the end of the document to reference 1 or more raw 
 #                        Dynarex documents
@@ -68,12 +69,13 @@ class Martile
     @data_source = {}
     
     @ignore_domainlabel = ignore_domainlabel
+
     
     s0 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
-    
-    s1 = slashpre s0
-    #puts 's : ' + s.inspect
-    s2 = code_block_to_html(s1.strip + "\n")
+    #puts 's0: ' + s0.inspect
+    s1 = apply_filter(s0) {|x| slashpre x }
+    #puts 's1 : ' + s1.inspect
+    s2 = apply_filter(s1) {|x| code_block_to_html(x.strip + "\n") }
 
     #puts 's2 : ' + s2.inspect
     #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
@@ -90,9 +92,9 @@ class Martile
     s7 = apply_filter(s6) {|x| table_to_html x }
     #puts 's7 : ' + s7.inspect
 
-    s8 = apply_filter(s7) {|x| underline x }
+    s8 = apply_filter(s7) {|x| underline x}
     #puts 's8: ' + s8.inspect
-    s9 = apply_filter(s8) {|x| section x }    
+    s9 = apply_filter(s8) {|x| section x }
     #puts 's9: ' + s9.inspect
     
     s10 = apply_filter(s9) {|x| smartlink x }
@@ -101,20 +103,20 @@ class Martile
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
-    s12 = apply_filter(s10){|x| audiotag x}
+    s12 = apply_filter(s10) {|x| audiotag x }
     #puts 's12 : ' + s12.inspect
-    s13 = apply_filter(s12){|x| videotag x}
+    s13 = apply_filter(s12) {|x| videotag x }
     #puts 's13 : ' + s13.inspect
-    s14 = apply_filter(s13){|x| iframetag x}
+    s14 = apply_filter(s13) {|x| iframetag x }
     #puts 's14 : ' + s14.inspect
-    s15 = apply_filter(s14){|x| kvx_to_dl x}
+    s15 = apply_filter(s14) {|x| kvx_to_dl x }
     #puts 's15 : ' + s15.inspect
-    s16 = apply_filter(s15){|x| list_item_to_hyperlink x}
+    s16 = apply_filter(s15) {|x| list_item_to_hyperlink x }
     #puts 's16 : ' + s16.inspect
-    s17 = apply_filter(s16) {|x| mtlite_utils x }        
+    s17 = apply_filter(s16) {|x| mtlite_utils x }
     
     #puts 's17 : ' + s17.inspect
-
+    
     @to_s = s17
   end
   
@@ -145,8 +147,8 @@ class Martile
   def code_block_to_html(s)
 
     
-    s.split(/(?=<pre>)/).map do |s2|
-
+    s.split(/(?=<pre>)/).map do |s2|      
+      
       if s2[0] != '<' then
         
         b =[]
@@ -180,17 +182,7 @@ class Martile
     end.join
       
 
-  end
-  
-  def dynarex_to_markdown2(s)
-
-    s.gsub(/-\[((https?:\/\/)?[\w\/\.\-]+)\]/) do |match|
-      
-      dynarex = Dynarex.new($1)
-      dynarex.to_h.map(&:values)
-      '[' + dynarex.to_h.map{|x| escape(x.values.join('|')) + "\n"}.join('|').chomp + ']'
-    end
-  end
+  end  
   
   def dynarex_to_markdown(s)
     
@@ -274,36 +266,42 @@ class Martile
       
     end.join
 
-  end  
+  end
+  
+  def filter_on(s)
 
-  def apply_filter(s, names=%w(pre code), &blk)
+    @filter = []
 
-    separator = "\n1449232851\n"
-    
-    a, apre = s.split(/(?=<pre)/).inject([[],[]]) do |r, row|
-
-      pre = nil
-
-      s2 = row.sub(/<pre.*<\/pre>/m) do |pattern|
-        pre = pattern
-        separator
+    a = s.split(/(?=<pre)/).map.with_index do |row, i|
+      
+      row.sub(/<pre.*<\/pre>/m) do |pattern|
+        placeholder = '!' + Time.now.to_i.to_s + i.to_s
+        @filter << [placeholder, pattern]
+        placeholder
       end
 
-      r.first << s2
-      r.last << pre if pre
-      r    
-
     end
-
-    r2 = blk.call a.join
+    a.join
     
-    apre.compact.each do |x|
-      r2.sub!(separator, x)
-    end
-
-    r2
+  end  
+  
+  def filter_off(raw_s)
     
+    s = raw_s.clone
+    @filter.each {|id, x| s.sub!(id, x) }
+    return s
+
   end
+
+  def apply_filter(s)
+    
+    s1 = filter_on(s)
+    s2 = yield s1
+    s3 = filter_off s2
+    
+    return s3
+  end
+  
 
   def explicit_list_to_html(s)
 
@@ -315,7 +313,7 @@ class Martile
       symbol = ('\\' + symbol) if symbol == '*'
 
       a3 = s.split(/(?=<#{type}>)/).map do |x|
-       # puts 'x' + x.inspect
+
         if x =~ /<ol>/ then
           "<%s>%s</%s>" % \
               [type, x[/<#{type}>[#{symbol}]\s*(.*)<\/#{type}>/m,1]\
@@ -438,7 +436,6 @@ class Martile
       s2 = x.strip
       next if s2.empty?
       
-      puts 's2: ' + s2.inspect
       id = s2.lines.first[/id=["']([^"']+)/,1]
       dx = Dynarex.new
       dx.import s2
@@ -515,7 +512,7 @@ class Martile
     a = s.lines
 
     a2 = a.inject([[]]) do |r,x|
-
+      
       match = x.match(/^={1}(?:#)?(\w+)?$/)
 
       if match then
