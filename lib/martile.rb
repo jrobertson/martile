@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:  24-Jun-2016  links containing a right parenthesis at the 
+#                        end are no longer cropped
 # bug fix:  11-Jun-2016  pre tags are now filtered out properly
 # feature:  22-May-2016  Introduced the __DATA__ section which appears at 
 #                        the end of the document to reference 1 or more raw 
@@ -114,10 +116,10 @@ class Martile
     s16 = apply_filter(s15) {|x| list_item_to_hyperlink x }
     #puts 's16 : ' + s16.inspect
     s17 = apply_filter(s16) {|x| mtlite_utils x }
-    
+    s18 = apply_filter(s17) {|x| hyperlinkify x }
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s17
+    @to_s = s18
   end
   
   def to_html()
@@ -327,6 +329,14 @@ class Martile
       s
     end
     
+  end
+  
+  def hyperlinkify(s)
+    
+   s.gsub(/\[([^\[]+)\]\(([^\)]+\)\)?\))/) do |x|
+      "<a href='#{$2.chop}'>#{$1}</a>"
+    end
+
   end
   
   def mtlite_utils(s)
