@@ -9,6 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  29-Jan-2017  2 or more code listings should now be parsed correctly
 # feature:  24-Jun-2016  links containing a right parenthesis at the 
 #                        end are no longer cropped
 # bug fix:  11-Jun-2016  pre tags are now filtered out properly
@@ -153,30 +154,16 @@ class Martile
       
       if s2[0] != '<' then
         
-        b =[]
+        s.lines.chunk {|x| x =~ /^\n|^    |\n/ }.map do |_, x| 
 
-        while s2 =~ /^ {4}/ do
-
-          a = s2.lines.to_a
-          r = a.take_while{|x| x[/^( {4}|\n)/]}
-          
-          if r.join.strip.length > 0 then
-            raw_code = a.shift(r.length).map{|x| x.sub(/^ {4}/,'')}.join
-
-            code_block = "<pre><code>%s</code></pre>\n" % escape(raw_code)
-
-            b << code_block
-            s2 = a.join
-            i = r.length        
-          else        
-            i = (s =~ /^ {4}/)        
+          if x.join.lstrip[/    /] then
+            "\n<pre><code>%s</code></pre>\n" % escape(x.join.gsub(/^ {4}/,''))
+          else
+            x.join
           end
 
-          b << s2.slice!(0,i)
-          
-        end
-        
-        b.join + s2
+        end.join
+
       else
         s2
       end

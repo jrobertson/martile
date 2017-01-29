@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
-  s.version = '0.6.29'
+  s.version = '0.6.30'
   s.summary = 'Martile is a Markdown pre formatter which is designed to format custom Markdown tags prior to being passed to the Markdown gem.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.signing_key = '../privatekeys/martile.pem'
   s.cert_chain  = ['gem-public_cert.pem']
   s.license = 'MIT'
-  s.email = 'james@r0bertson.co.uk'
+  s.email = 'james@jamesrobertson.eu'
   s.homepage = 'https://github.com/jrobertson/martile'
   s.required_ruby_version = '>= 2.1.0'
 end
