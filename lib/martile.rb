@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# minor feature:
+#            3-Feb-2017  a video smartlink can now include options e.g. loop: true
 # bug fix:  29-Jan-2017  2 or more code listings should now be parsed correctly
 # feature:  24-Jun-2016  links containing a right parenthesis at the 
 #                        end are no longer cropped
@@ -545,21 +547,27 @@ class Martile
   
   def videotag(s)
     
-    s.gsub(/\B!v\[\]\((https?:\/\/[^\)]+)\)\B/) do |x|
-      
-      files = ($1).split
+    s.gsub(/\B!v\[\]\((https?:\/\/[^\)]+)\)(\{[^\}]+\})?/) do |match|
 
-      h = {
+      files = ($1).split
+      attr = ($2)
+
+      h = attr ? attr.scan(/(\w+):\s+(\w+)/).to_h : {}
+      attributes = h.any? ? (' ' + 
+                             h.map {|k,v| "%s='%s'" % [k,v]}.join(' ')) : ''
+
+      h2 = {
         /\.og[gv]$/ => 'ogg', /\.mp4$/ => 'mp4', /\.mov$/ => 'mov', 
         /\.webm$/ => 'webm' 
       }
 
       sources = files.map do |file|
-        type = h.detect{|k,v| file[k] }.last
+
+        type = h2.detect{|k,v| file[k] }.last
         "  <source src='%s' type='video/%s'/>" % [file, type]
       end
 
-      "<video controls='controls'>\n%s\n</video>" % [sources.join("\n")]
+      "<video controls='controls'%s>\n%s\n</video>" % [attributes, sources.join("\n")]
     end    
   
   end
