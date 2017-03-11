@@ -9,6 +9,17 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:  11-Mar-2017  A details and summary tag can now be generated from +> 
+#                        e.g.
+#                        +>
+#                        This a paragraph
+# 
+#                        ----------------
+#
+#                        * something
+#                        +
+# minor feature:
+#            9-Feb-2017  implemented a shorthand (^) for the mark tag
 # minor feature:
 #            3-Feb-2017  a video smartlink can now include options e.g. loop: true
 # bug fix:  29-Jan-2017  2 or more code listings should now be parsed correctly
@@ -22,47 +33,7 @@ require 'kvx'
 #                        syntax instead of -[]
 # bug fix:  29-Feb-2016  Arbitrary URLs will no longer automatically 
 #                        be hyperlinked
-# bug fix:  05-Dec-2015  PRE tags are now correctly filtered out using the 
-#                        apply_filter() method.
-#                        the ignore_domainlabel keword is now supplied to the 
-#                        Martile.new statement within the section() method
-# bug fix:  04-Dec-2015  apply_filter() now masks over <pre> tags rather than
-#                        splitting them and passing them to the block
-# bug fix:  03-Dec-2015  A smartlink which ends with a closing parenthesis is 
-#                          now output to a regular anchor tag
-#                        It should now identify when using a section equals sign
-#                        to terminate a section block
-#                        The content of a section block can now be processed 
-#                           using the Martile object recursively
-# bug fix:  22-Oct-2015  The method apply_filter() is now used 
-#                                                 with the section() method
-# feature:  10-Oct-2015  A hyperlink can now be create from a 
-#                        list item containing a URL
-# bug fix:  06-Oct-2015  Can now handle multiple smart links on the same line
-# bug fix:  17-Aug-2015  dx_render_table() was missing a couple of parameters
-# feature:  09-Aug-2015  kvx_to_dl() can convert a kind of 
-#                        markdown URL to a DL HTML list
-# feature:  02-Aug-2015  dynarex_to_table() is now know as dynarex_to_markdown()
-#                        A markdown list will be rendered from a Dynarex 
-#                        document if there is only a single field column
-# improvement: 
-#           16-Jul-2015  to_s is now equivalent to_html; to_s is 
-#                        more readable when it's just text which is returned
-# feature:  06-Jul-2015  dynarex_to_markdown(): 
-#                        1. A URL within a  col is now hyperlinked
-#                        2. Select fields can now be displayd
-# feature:  02-Jul-2015  Apply_filter() now filters out pre and code tags
-#                        The shorthand !i[]() can now render an iframe tag 
-#                        e.g. !i[](http://somefile.url/sometext.txt)                        
-# feature:  19-Jun-2015  Now uses github flavoured markdown to style the table
-#           01-Jun-2015  re-applied yesterday's feature which I 
-#                        removed shortly afterwards
-# feature:  31-May-2015: Transforms a kind-of markdown URL to an audio tag 
-#    e.g. !a[](http://someurl) transforms to ). Transforms a kind-of 
-#   markdown URL to an video tag e.g. !v[](http://someurl) transforms to )
-# bug fix:               The inner Martile call within a Section now 
-#  ignores domain labels to avoid duplication of URL scanning.
-# feature:  29-Mar-2015: Borrowed the strikethru feature from Mtlite
+
 
 
 class Martile
@@ -120,9 +91,12 @@ class Martile
     #puts 's16 : ' + s16.inspect
     s17 = apply_filter(s16) {|x| mtlite_utils x }
     s18 = apply_filter(s17) {|x| hyperlinkify x }
+    s19 = apply_filter(s18) {|x| highlight x }
+    s20 = apply_filter(s19) {|x| details x }
+    
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s18
+    @to_s = s20
   end
   
   def to_html()
@@ -173,7 +147,27 @@ class Martile
     end.join
       
 
-  end  
+  end
+
+  def details(s)
+    
+    s.split(/(?=\+>)/).map do |x|
+      
+      if x =~ /\+>/ then
+
+        x[2..-1].sub(/(.*)[^\+]+\n\+/m) do |x2|
+
+          summary, detail = x2.split(/----+/,2)
+          "<details><summary>%s</summary>%s</details>" % [summary, detail.chop]
+
+        end
+        
+      else
+        x
+      end
+    end.join
+
+  end
   
   def dynarex_to_markdown(s)
     
@@ -477,6 +471,12 @@ class Martile
     end
 
   end
+  
+  def highlight(s)
+
+    s.gsub(/\^[^\^]+\^/) {|x| "<mark>%s</mark>" % x[1..-2] }
+
+  end  
   
   def smartlink(s)
         
