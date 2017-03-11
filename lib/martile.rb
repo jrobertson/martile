@@ -11,7 +11,7 @@ require 'kvx'
 
 # feature:  11-Mar-2017  A details and summary tag can now be generated from +> 
 #                        e.g.
-#                        +>
+#                        !+
 #                        This a paragraph
 # 
 #                        ----------------
@@ -151,9 +151,9 @@ class Martile
 
   def details(s)
     
-    s.split(/(?=\+>)/).map do |x|
+    s.split(/(?=\!\+)/).map do |x|
       
-      if x =~ /\+>/ then
+      if x =~ /\!\+/ then
 
         x[2..-1].sub(/(.*)[^\+]+\n\+/m) do |x2|
 
