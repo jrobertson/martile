@@ -9,7 +9,9 @@ require 'rdiscount'
 require 'kvx'
 
 
-# feature:  28-May-2017  An embeded Dynarex table contents are now rendered to 
+# feature:  28-May-2017  Return characters are now stripped out.
+
+#                        An embeded Dynarex table contents are now rendered to 
 #                        Markdown by default
 # feature:  11-Mar-2017  A details and summary tag can now be generated from +> 
 #                        e.g.
@@ -48,6 +50,7 @@ class Martile
     
     @ignore_domainlabel = ignore_domainlabel
 
+    raw_s.gsub!("\r",'')
     
     s0 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
     #puts 's0: ' + s0.inspect

@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
-  s.version = '0.6.36'
+  s.version = '0.6.37'
   s.summary = 'Martile is a Markdown pre formatter which is designed to format custom Markdown tags prior to being passed to the Markdown gem.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
