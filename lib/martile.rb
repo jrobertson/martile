@@ -9,8 +9,11 @@ require 'rdiscount'
 require 'kvx'
 
 
-# feature:  28-May-2017  Return characters are now stripped out.
-
+# feature:  28-May-2017  Within the context of an embedded Dynarex table, 
+#  the nomarkdown extension was wrapped around the inner HTML for each column
+#                        
+#                        Return characters are now stripped out.
+#
 #                        An embeded Dynarex table contents are now rendered to 
 #                        Markdown by default
 # feature:  11-Mar-2017  A details and summary tag can now be generated from +> 
@@ -359,12 +362,13 @@ class Martile
   
   def dx_render_table(dx, raw_select)
     
-      markdown = true
+      markdown, heading = true, true
       
       if raw_select then
         raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
         fields = raw_fields.split(/\s*,\s*/) if raw_fields
         markdown = false if raw_select[/\bmarkdown:\s*false\b/]
+        heading = false if raw_select[/\bheading:\s*false\b/]
       end
       
       print_row = -> (row, widths) do
@@ -394,7 +398,7 @@ class Martile
 
         row.map do |col|
 
-          found_match = col.match(/https?:\/\/([^\/]+)(.*)/)
+          found_match = col.match(/^https?:\/\/([^\/]+)(.*)/)
 
           r = if found_match then
 
@@ -405,8 +409,17 @@ class Martile
             url_title = (a.join('.') + path)[0..39] + '...'
 
             "[%s](%s)" % [url_title, col]
+            
           else
-            markdown ? RDiscount.new(col).to_html.strip.gsub("\n",'') : col
+            
+            if markdown then 
+              "{::nomarkdown}" + 
+                  RDiscount.new(col).to_html.strip.gsub("\n",'') + "{:/}"
+            else
+
+              col
+              
+            end
             
           end
           
@@ -415,12 +428,14 @@ class Martile
       end      
 
       widths = ([keys] + vals).transpose.map{|x| x.max_by(&:length).length}
-      th = '|' + keys.join('|') + "|\n"
-      th = print_row.call(keys, widths)
-      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths
-
-      tb = print_rows.call(vals, widths)
+      
+            
+      th = heading  ? print_row.call(keys, widths) : ''
+      th_line = print_thline.call widths.map {|x| '-' * (x+1)}, widths        
+      tb = print_rows.call(vals, widths)      
+        
       table = th + th_line + tb
+      
     end
   
   def unordered_list_to_html(s)
