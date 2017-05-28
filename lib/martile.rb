@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:  28-May-2017  An embeded Dynarex table contents are now rendered to 
+#                        Markdown by default
 # feature:  11-Mar-2017  A details and summary tag can now be generated from +> 
 #                        e.g.
 #                        !+
@@ -354,9 +356,12 @@ class Martile
   
   def dx_render_table(dx, raw_select)
     
+      markdown = true
+      
       if raw_select then
         raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
-        fields = raw_fields.split(/\s*,\s*/)        
+        fields = raw_fields.split(/\s*,\s*/) if raw_fields
+        markdown = false if raw_select[/\bmarkdown:\s*false\b/]
       end
       
       print_row = -> (row, widths) do
@@ -398,7 +403,8 @@ class Martile
 
             "[%s](%s)" % [url_title, col]
           else
-            col
+            markdown ? RDiscount.new(col).to_html.strip.gsub("\n",'') : col
+            
           end
           
           r
