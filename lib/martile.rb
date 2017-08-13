@@ -9,6 +9,10 @@ require 'rdiscount'
 require 'kvx'
 
 
+# bug fix:  13-Aug-2017  bug fixes: A markdown table is no longer interpreted 
+#                       as <code> and a string containig a caret is no longer 
+#                       interpreted as <nark> if it contains non 
+#                       alphanumerical characters.
 # feature:  28-May-2017  Within the context of an embedded Dynarex table, 
 #  the nomarkdown extension was wrapped around the inner HTML for each column
 #                        
@@ -140,7 +144,7 @@ class Martile
         
         s.lines.chunk {|x| x =~ /^\n|^    |\n/ }.map do |_, x| 
 
-          if x.join.lstrip[/    /] then
+          if x.join.lstrip[/^    /] then
             "\n<pre><code>%s</code></pre>\n" % escape(x.join.gsub(/^ {4}/,''))
           else
             x.join
@@ -498,7 +502,7 @@ class Martile
   
   def highlight(s)
 
-    s.gsub(/\^[^\^]+\^/) {|x| "<mark>%s</mark>" % x[1..-2] }
+    s.gsub(/\^\w+\^/) {|x| "<mark>%s</mark>" % x[1..-2] }
 
   end  
   
