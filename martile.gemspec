@@ -1,12 +1,12 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
-  s.version = '0.6.39'
+  s.version = '0.7.0'
   s.summary = 'Martile is a Markdown pre formatter which is designed to format custom Markdown tags prior to being passed to the Markdown gem.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
   s.add_runtime_dependency('rdiscount', '~> 2.2', '>=2.2.0.1')
-  s.add_runtime_dependency('dynarex', '~> 1.7', '>=1.7.4')
-  s.add_runtime_dependency('kvx', '~> 0.5', '>=0.5.11')
+  s.add_runtime_dependency('dynarex', '~> 1.7', '>=1.7.23')
+  s.add_runtime_dependency('kvx', '~> 0.6', '>=0.6.4')
   s.signing_key = '../privatekeys/martile.pem'
   s.cert_chain  = ['gem-public_cert.pem']
   s.license = 'MIT'

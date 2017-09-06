@@ -9,6 +9,8 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:   6-Sep-2017 The preparation of a Dynarex table in Markdown is now 
+#                       done from the Dynarex object
 # bug fix:  13-Aug-2017  bug fixes: A markdown table is no longer interpreted 
 #                       as <code> and a string containig a caret is no longer 
 #                       interpreted as <nark> if it contains non 
@@ -365,6 +367,21 @@ class Martile
   end
   
   def dx_render_table(dx, raw_select)
+  
+    fields, markdown, heading = nil, true, true
+    
+    if raw_select then
+      raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
+      fields = raw_fields.split(/\s*,\s*/) if raw_fields
+      inner = false if raw_select[/\bmarkdown:\s*false\b/]
+      heading = false if raw_select[/\bheading:\s*false\b/]
+    end
+    
+
+    dx.to_table(markdown: true, innermarkdown: inner, heading: heading)
+  end  
+  
+  def dx_render_table2(dx, raw_select)
     
       markdown, heading = true, true
       
