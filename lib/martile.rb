@@ -9,7 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
-# feature:   8-Sep-2017 An SVG object can now rendered from !s[]()
+# feature:   8-Sep-2017 An SVG doc can now be embedded from !s[]()
 # feature:   6-Sep-2017 The preparation of a Dynarex table in Markdown is now 
 #                       done from the Dynarex object
 # bug fix:  13-Aug-2017  bug fixes: A markdown table is no longer interpreted 
@@ -598,9 +598,13 @@ class Martile
   
   def svgtag(s)
     
-    s.gsub(/\B!s\[\]\((https?:\/\/[^\)]+)\)/) do |match, bo|
-      "<object data='#{$1}' type='image/svg+xml'></object>"
-    end    
+    s.gsub(/\B!s\[\]\((https?:\/\/[^\)]+)\)/) do 
+      
+      svg = RXFHelper.read($1).first
+      svg.slice!(/.*(?=<svg)/m)
+      svg
+      
+    end
 
   end
   
