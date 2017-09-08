@@ -9,6 +9,7 @@ require 'rdiscount'
 require 'kvx'
 
 
+# feature:   8-Sep-2017 An SVG object can now rendered from !s[]()
 # feature:   6-Sep-2017 The preparation of a Dynarex table in Markdown is now 
 #                       done from the Dynarex object
 # bug fix:  13-Aug-2017  bug fixes: A markdown table is no longer interpreted 
@@ -107,10 +108,11 @@ class Martile
     s18 = apply_filter(s17) {|x| hyperlinkify x }
     s19 = apply_filter(s18) {|x| highlight x }
     s20 = apply_filter(s19) {|x| details x }
+    s21 = apply_filter(s20) {|x| svgtag x }
     
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s20
+    @to_s = s21
   end
   
   def to_html()
@@ -368,17 +370,21 @@ class Martile
   
   def dx_render_table(dx, raw_select)
   
-    fields, markdown, heading = nil, true, true
+    fields, markdown, heading, inner = nil, true, true, true
     
     if raw_select then
+
       raw_fields = raw_select[/select:\s*["']([^"']+)/,1]
+      
       fields = raw_fields.split(/\s*,\s*/) if raw_fields
       inner = false if raw_select[/\bmarkdown:\s*false\b/]
       heading = false if raw_select[/\bheading:\s*false\b/]
+
     end
     
 
-    dx.to_table(markdown: true, innermarkdown: inner, heading: heading)
+    dx.to_table(markdown: true, fields: fields, innermarkdown: inner, 
+                heading: heading)
   end  
   
   def dx_render_table2(dx, raw_select)
@@ -519,7 +525,7 @@ class Martile
   
   def highlight(s)
 
-    s.gsub(/\^\w+\^/) {|x| "<mark>%s</mark>" % x[1..-2] }
+    s.gsub(/\^[\w ]+\^/) {|x| "<mark>%s</mark>" % x[1..-2] }
 
   end  
   
@@ -589,6 +595,15 @@ class Martile
 
     a2.join
   end
+  
+  def svgtag(s)
+    
+    s.gsub(/\B!s\[\]\((https?:\/\/[^\)]+)\)/) do |match, bo|
+      "<object data='#{$1}' type='image/svg+xml'></object>"
+    end    
+
+  end
+  
   
   def videotag(s)
     
