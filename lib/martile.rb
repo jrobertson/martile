@@ -4,11 +4,13 @@
 
 #require 'rexle-builder'
 #require 'rexle'
+require 'kvx'
 require 'dynarex'
 require 'rdiscount'
-require 'kvx'
+require 'mindmapviz'
 
 
+# feature:   9-Sep-2017 A Mindmapviz raw document can now be embedded
 # feature:   8-Sep-2017 An SVG doc can now be embedded from !s[]()
 # feature:   6-Sep-2017 The preparation of a Dynarex table in Markdown is now 
 #                       done from the Dynarex object
@@ -337,6 +339,7 @@ class Martile
     end
 
   end
+    
   
   def mtlite_utils(s)
     
@@ -481,10 +484,17 @@ class Martile
       next if s2.empty?
       
       id = s2.lines.first[/id=["']([^"']+)/,1]
-      dx = Dynarex.new
-      dx.import s2
-
-      @data_source[id] = dx    
+      
+      @data_source[id] = case s2 
+      when /^<\?dynarex /
+        
+        dx = Dynarex.new
+        dx.import s2
+        dx
+      when /^<\?mindmapviz /
+        
+        Mindmapviz.new s2
+      end    
     end
     
     a[0..-2].join
@@ -598,12 +608,22 @@ class Martile
   
   def svgtag(s)
     
-    s.gsub(/\B!s\[\]\((https?:\/\/[^\)]+)\)/) do 
+    s.gsub(/\B!s\[\]\((#\w+|https?:\/\/[^\)]+)\)/) do 
       
-      svg = RXFHelper.read($1).first
+      source = ($1)  
+      
+      svg = if source =~ /^http/ then
+      
+        RXFHelper.read($1).first        
+        
+      else
+        
+        @data_source[source[/\w+/]].to_svg
+        
+      end     
+      
       svg.slice!(/.*(?=<svg)/m)
       svg
-      
     end
 
   end
