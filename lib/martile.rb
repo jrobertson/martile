@@ -8,8 +8,10 @@ require 'kvx'
 require 'dynarex'
 require 'rdiscount'
 require 'mindmapviz'
+require 'flowchartviz'
 
 
+# feature:  16-Sep-2017 A Flowchartviz raw document can now be embedded
 # feature:   9-Sep-2017 A Mindmapviz raw document can now be embedded
 # feature:   8-Sep-2017 An SVG doc can now be embedded from !s[]()
 # feature:   6-Sep-2017 The preparation of a Dynarex table in Markdown is now 
@@ -491,9 +493,14 @@ class Martile
         dx = Dynarex.new
         dx.import s2
         dx
+        
       when /^<\?mindmapviz /
         
         Mindmapviz.new s2
+        
+      when /^<\?flowchartviz /
+        
+        Flowchartviz.new s2        
       end    
     end
     
@@ -614,7 +621,7 @@ class Martile
       
       svg = if source =~ /^http/ then
       
-        RXFHelper.read($1).first        
+        RXFHelper.read(source).first        
         
       else
         
