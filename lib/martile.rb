@@ -5,12 +5,15 @@
 #require 'rexle-builder'
 #require 'rexle'
 require 'kvx'
+require 'rqrcode'
 require 'dynarex'
 require 'rdiscount'
 require 'mindmapviz'
 require 'flowchartviz'
 
 
+# feature:  21-Sep-2017 A qrcode can now be rendered 
+#                         e.g. !q[](http://github.com)
 # feature:  16-Sep-2017 A Flowchartviz raw document can now be embedded
 # feature:   9-Sep-2017 A Mindmapviz raw document can now be embedded
 # feature:   8-Sep-2017 An SVG doc can now be embedded from !s[]()
@@ -112,11 +115,12 @@ class Martile
     s18 = apply_filter(s17) {|x| hyperlinkify x }
     s19 = apply_filter(s18) {|x| highlight x }
     s20 = apply_filter(s19) {|x| details x }
-    s21 = apply_filter(s20) {|x| svgtag x }
+    s21 = apply_filter(s20) {|x| qrcodetag x }
+    s22 = apply_filter(s21) {|x| svgtag x }
     
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s21
+    @to_s = s22
   end
   
   def to_html()
@@ -368,6 +372,18 @@ class Martile
     end    
 
   end
+  
+  def qrcodetag(s)
+    
+    s.gsub(/\B!q\[\]\((https?:\/\/[^\)]+)\)/) do 
+      
+      svg = RQRCode::QRCode.new($1).as_svg     
+      svg.slice!(/.*(?=<svg)/m)
+      
+      svg
+    end
+
+  end  
   
   def ordered_list_to_html(s)
     list_to_html s, '#'
