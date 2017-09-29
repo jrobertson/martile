@@ -12,6 +12,8 @@ require 'mindmapviz'
 require 'flowchartviz'
 
 
+# minor improvement: 29-Sep-2017 A Markdownviz or Flowchartviz embedded 
+#                 document can now be declared without the word viz at the end.
 # feature:  21-Sep-2017 A qrcode can now be rendered 
 #                         e.g. !q[](http://github.com)
 # feature:  16-Sep-2017 A Flowchartviz raw document can now be embedded
@@ -510,11 +512,11 @@ class Martile
         dx.import s2
         dx
         
-      when /^<\?mindmapviz /
+      when /^<\?mindmap(?:viz)? /
         
         Mindmapviz.new s2
         
-      when /^<\?flowchartviz /
+      when /^<\?flowchart(?:viz)? /
         
         Flowchartviz.new s2        
       end    
