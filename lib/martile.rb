@@ -12,6 +12,7 @@ require 'mindmapviz'
 require 'flowchartviz'
 
 
+# feature:   8-Feb-2018 A section attribute id can now include a dash (-).
 # minor improvement: 29-Sep-2017 A Markdownviz or Flowchartviz embedded 
 #                 document can now be declared without the word viz at the end.
 # feature:  21-Sep-2017 A qrcode can now be rendered 
@@ -176,6 +177,8 @@ class Martile
   end
 
   def details(s)
+    
+    puts 'inside details: ' + s.inspect
     
     s.split(/(?=\!\+)/).map do |x|
       
@@ -598,7 +601,7 @@ class Martile
 
     a2 = a.inject([[]]) do |r,x|
       
-      match = x.match(/^={1}(?:#)?(\w+)?$/)
+      match = x.match(/^={1}(?:#)?([\w-]+)?$/)
 
       if match then
 
