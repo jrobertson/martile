@@ -13,6 +13,8 @@ require 'flowchartviz'
 
 
 # feature:   8-Feb-2018 A section attribute id can now include a dash (-).
+#                       Markdown inside a section element is no longer 
+#                       rendered by RDiscount
 # minor improvement: 29-Sep-2017 A Markdownviz or Flowchartviz embedded 
 #                 document can now be declared without the word viz at the end.
 # feature:  21-Sep-2017 A qrcode can now be rendered 
@@ -44,19 +46,6 @@ require 'flowchartviz'
 #                        +
 # minor feature:
 #            9-Feb-2017  implemented a shorthand (^) for the mark tag
-# minor feature:
-#            3-Feb-2017  a video smartlink can now include options e.g. loop: true
-# bug fix:  29-Jan-2017  2 or more code listings should now be parsed correctly
-# feature:  24-Jun-2016  links containing a right parenthesis at the 
-#                        end are no longer cropped
-# bug fix:  11-Jun-2016  pre tags are now filtered out properly
-# feature:  22-May-2016  Introduced the __DATA__ section which appears at 
-#                        the end of the document to reference 1 or more raw 
-#                        Dynarex documents
-# improvement: 9-Mar-2016 Method dynarex_to_markdown now uses the !d[]() 
-#                        syntax instead of -[]
-# bug fix:  29-Feb-2016  Arbitrary URLs will no longer automatically 
-#                        be hyperlinked
 
 
 
@@ -611,8 +600,8 @@ class Martile
 
           r << ["%s%s</section>" % 
                  [list[0], \
-                  RDiscount.new(Martile.new(list[1..-1].join, \
-                      ignore_domainlabel: @ignore_domainlabel).to_html).to_html
+                  Martile.new(list[1..-1].join, \
+                      ignore_domainlabel: @ignore_domainlabel).to_html
                  ]
                ]
           r << []
@@ -620,7 +609,7 @@ class Martile
 
           raw_id = match.captures.first
           id = raw_id ? (" id='%s'" % raw_id) : ''          
-          r << ["<section#{id}>"]
+          r << ["<section#{id} markdown='1'>"]
         end
         
       else
