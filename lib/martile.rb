@@ -4,14 +4,16 @@
 
 #require 'rexle-builder'
 #require 'rexle'
-require 'kvx'
+#require 'kvx'
 require 'rqrcode'
-require 'dynarex'
-require 'rdiscount'
-require 'mindmapviz'
+#require 'dynarex'
+#require 'rdiscount'
+require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  12-Feb-2018 Transforms <mindmap> tags into a 
+#                       mindmap + related headings
 # feature:   8-Feb-2018 A section attribute id can now include a dash (-).
 #                       Markdown inside a section element is no longer 
 #                       rendered by RDiscount
@@ -53,7 +55,7 @@ class Martile
 
   attr_reader :to_s, :data_source
 
-  def initialize(raw_s, ignore_domainlabel: nil)
+  def initialize(raw_s, ignore_domainlabel: nil, debug: false)
     
     @data_source = {}
     
@@ -61,16 +63,21 @@ class Martile
 
     raw_s.gsub!("\r",'')
     
+    
     s0 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
-    #puts 's0: ' + s0.inspect
-    s1 = apply_filter(s0) {|x| slashpre x }
+    puts 's0: ' + s0.inspect if debug
+    
+    s1 = MindmapDoc.new(debug: debug).transform(s0)
+    puts 's1: ' + s1.inspect if debug
+    
+    s2 = apply_filter(s1) {|x| slashpre x }
     #puts 's1 : ' + s1.inspect
-    s2 = apply_filter(s1) {|x| code_block_to_html(x.strip + "\n") }
+    s3 = apply_filter(s2) {|x| code_block_to_html(x.strip + "\n") }
 
     #puts 's2 : ' + s2.inspect
     #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
     #puts 's3 : ' + s3.inspect
-    s4 = apply_filter(s2) {|x| ordered_list_to_html x }
+    s4 = apply_filter(s3) {|x| ordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
 
     s5 = apply_filter(s4) {|x| unordered_list_to_html x }
