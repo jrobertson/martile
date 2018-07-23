@@ -12,6 +12,7 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  23-Jul-2018 An HTML form can now be generated
 # feature:  12-Feb-2018 Transforms <mindmap> tags into a 
 #                       mindmap + related headings
 # feature:   8-Feb-2018 A section attribute id can now include a dash (-).
@@ -55,71 +56,101 @@ class Martile
 
   attr_reader :to_s, :data_source
 
-  def initialize(raw_s, ignore_domainlabel: nil, debug: false)
+  def initialize(raw_s='', ignore_domainlabel: nil, debug: false, log: nil)
     
     @data_source = {}
     
-    @ignore_domainlabel = ignore_domainlabel
+    @ignore_domainlabel, @log = ignore_domainlabel, log
 
     raw_s.gsub!("\r",'')
     
     
-    s0 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
-    puts 's0: ' + s0.inspect if debug
+    s10 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
+    puts 's10: ' + s10.inspect if debug
     
-    s1 = MindmapDoc.new(debug: debug).transform(s0)
-    puts 's1: ' + s1.inspect if debug
+    s20 = MindmapDoc.new(debug: debug).transform(s10)
+    puts 's20: ' + s20.inspect if debug
     
-    s2 = apply_filter(s1) {|x| slashpre x }
+    s30 = apply_filter(s20) {|x| slashpre x }
     #puts 's1 : ' + s1.inspect
-    s3 = apply_filter(s2) {|x| code_block_to_html(x.strip + "\n") }
+    s40 = apply_filter(s30) {|x| code_block_to_html(x.strip + "\n") }
 
     #puts 's2 : ' + s2.inspect
     #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
     #puts 's3 : ' + s3.inspect
-    s4 = apply_filter(s3) {|x| ordered_list_to_html x }
+    s50 = apply_filter(s40) {|x| ordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
 
-    s5 = apply_filter(s4) {|x| unordered_list_to_html x }
+    s60 = apply_filter(s50) {|x| unordered_list_to_html x }
     #puts 's5 : ' + s5.inspect
 
-    s6 = apply_filter(s5) {|x| dynarex_to_markdown x }
+    s70 = apply_filter(s60) {|x| dynarex_to_markdown x }
     #puts 's6 :' + s6.inspect
 
-    s7 = apply_filter(s6) {|x| table_to_html x }
+    s80 = apply_filter(s70) {|x| table_to_html x }
     #puts 's7 : ' + s7.inspect
 
-    s8 = apply_filter(s7) {|x| underline x}
+    s90 = apply_filter(s80) {|x| underline x}
     #puts 's8: ' + s8.inspect
-    s9 = apply_filter(s8) {|x| section x }
+    s100 = apply_filter(s90) {|x| section x }
     #puts 's9: ' + s9.inspect
     
-    s10 = apply_filter(s9) {|x| smartlink x }
+    s110 = apply_filter(s100) {|x| smartlink x }
 
     #puts 's10: ' + s10.inspect
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
-    s12 = apply_filter(s10) {|x| audiotag x }
+    s120 = apply_filter(s110) {|x| audiotag x }
     #puts 's12 : ' + s12.inspect
-    s13 = apply_filter(s12) {|x| videotag x }
+    s130 = apply_filter(s120) {|x| videotag x }
     #puts 's13 : ' + s13.inspect
-    s14 = apply_filter(s13) {|x| iframetag x }
+    s140 = apply_filter(s130) {|x| iframetag x }
     #puts 's14 : ' + s14.inspect
-    s15 = apply_filter(s14) {|x| kvx_to_dl x }
+    s150 = apply_filter(s140) {|x| kvx_to_dl x }
     #puts 's15 : ' + s15.inspect
-    s16 = apply_filter(s15) {|x| list_item_to_hyperlink x }
+    s160 = apply_filter(s150) {|x| list_item_to_hyperlink x }
+    s165 = apply_filter(s160) {|x| formify x }
     #puts 's16 : ' + s16.inspect
-    s17 = apply_filter(s16) {|x| mtlite_utils x }
-    s18 = apply_filter(s17) {|x| hyperlinkify x }
-    s19 = apply_filter(s18) {|x| highlight x }
-    s20 = apply_filter(s19) {|x| details x }
-    s21 = apply_filter(s20) {|x| qrcodetag x }
-    s22 = apply_filter(s21) {|x| svgtag x }
+    s170 = apply_filter(s165) {|x| mtlite_utils x }
+    s180 = apply_filter(s170) {|x| hyperlinkify x }
+    s190 = apply_filter(s180) {|x| highlight x }
+    s200 = apply_filter(s190) {|x| details x }
+    s210 = apply_filter(s200) {|x| qrcodetag x }
+    s220 = apply_filter(s210) {|x| svgtag x }
+    
     
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s22
+    @to_s = s220
+  end
+  
+  def create_form(s)
+
+    a = LineTree.new(s).to_a
+    
+    def create_form_item(raw_name)
+
+      name = raw_name.downcase[/\w+/]
+      type =  name =~ /password/ ? :password : :text
+
+      ['div', {}, 
+        ['label', {for: name}, raw_name], 
+        ['input', {type: type, id: name, name: name}]
+      ]
+    end
+    
+    a2 = a[0][1..-1].select {|x| x[0] =~ /[^:]+\:/}.map do |x|
+      create_form_item(x[0][/[^:]+\:/])
+    end
+
+    button_name, link = s.match(/\[([^\]]+)\]\(["']([^"']+)["']\)/).captures
+
+    a2 << ['div', {class: 'button'}, ['button', {type: 'submit'}, button_name]]
+
+    a2.insert 0, 'form', {id: a[0][0], action: link, method: 'post'}
+    Rexle.new(a2).xml pretty: true, declaration: false
+    
   end
   
   def to_html()
@@ -233,6 +264,20 @@ class Martile
   
   def escape(s)
     s.gsub('<','&lt;').gsub('>','&gt;')
+  end
+  
+  def formify(s)
+    
+    s.split(/(?=\n\w+)/).map do |s|
+      
+      if s =~ /(?=\w+\n  \w+: +\[ +\])/ then
+        create_form(s)
+      else
+        s
+      end
+      
+    end.join
+    
   end
   
   def iframetag(s)
@@ -353,7 +398,7 @@ class Martile
     # convert square brackets to unicode check boxes
     # replaces a [] with a unicode checkbox, 
     #                         and [x] with a unicode checked checkbox
-    s2 = s.gsub(/\s\[\s*\]\s/,' &#9744; ').gsub(/\s\[x\]\s/,' &#9745; ')
+    s2 = s.gsub(/\s\[ {0,1}\]\s/,' &#9744; ').gsub(/\s\[x\]\s/,' &#9745; ')
     
     # create domain labels for hyperlinks
     #
