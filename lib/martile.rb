@@ -12,6 +12,8 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# bug fix:  23-Sep-2018 mindmap tag is now properly 
+#                       transformed before parse__data__
 # feature:  23-Jul-2018 An HTML form can now be generated
 # feature:  12-Feb-2018 Transforms <mindmap> tags into a 
 #                       mindmap + related headings
@@ -57,7 +59,9 @@ class Martile
   attr_reader :to_s, :data_source
 
   def initialize(raw_s='', ignore_domainlabel: nil, debug: false, log: nil)
-    
+
+
+    @debug = debug
     @data_source = {}
     
     @ignore_domainlabel, @log = ignore_domainlabel, log
@@ -65,11 +69,11 @@ class Martile
     raw_s.gsub!("\r",'')
     
     
-    s10 = raw_s =~ /^__DATA__$/ ? parse__data__(raw_s) : raw_s
+    s10 = MindmapDoc.new(debug: debug).transform(raw_s)
     puts 's10: ' + s10.inspect if debug
     
-    s20 = MindmapDoc.new(debug: debug).transform(s10)
-    puts 's20: ' + s20.inspect if debug
+    s20 = s10 =~ /^__DATA__$/ ? parse__data__(s10) : s10
+    puts 's20: ' + s20.inspect if debug    
     
     s30 = apply_filter(s20) {|x| slashpre x }
     #puts 's1 : ' + s1.inspect
@@ -538,6 +542,8 @@ class Martile
 
   def parse__data__(s)
 
+    puts 'inside parse__data__' if @debug
+    
     a = s.split(/^__DATA__$/,2)
 
     data = a[-1]
@@ -557,7 +563,7 @@ class Martile
         dx
         
       when /^<\?mindmap(?:viz)? /
-        
+        puts 's2: ' + s2.inspect if @debug
         Mindmapviz.new s2
         
       when /^<\?flowchart(?:viz)? /
