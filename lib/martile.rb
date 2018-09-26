@@ -12,6 +12,9 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# bug fix:  26-Sep-2018 An extra new line is added after a code block to 
+#                       ensure the line directly below it is transformed to 
+#                       HTML correctly.
 # bug fix:  23-Sep-2018 mindmap tag is now properly 
 #                       transformed before parse__data__
 # feature:  23-Jul-2018 An HTML form can now be generated
@@ -191,7 +194,7 @@ class Martile
         s.lines.chunk {|x| x =~ /^\n|^    |\n/ }.map do |_, x| 
 
           if x.join.lstrip[/^    /] then
-            "\n<pre><code>%s</code></pre>\n" % escape(x.join.gsub(/^ {4}/,''))
+            "\n<pre><code>%s</code></pre>\n\n" % escape(x.join.gsub(/^ {4}/,''))
           else
             x.join
           end
