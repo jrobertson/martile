@@ -12,6 +12,7 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:   3-Oct-2018 An embed tag can now be used to dynamically load content
 # bug fix:  26-Sep-2018 An extra new line is added after a code block to 
 #                       ensure the line directly below it is transformed to 
 #                       HTML correctly.
@@ -125,11 +126,12 @@ class Martile
     s200 = apply_filter(s190) {|x| details x }
     s210 = apply_filter(s200) {|x| qrcodetag x }
     s220 = apply_filter(s210) {|x| svgtag x }
+    s230 = apply_filter(s220) {|x| embedtag x }
     
     
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s220
+    @to_s = s230
   end
   
   def create_form(s)
@@ -268,6 +270,15 @@ class Martile
     end
 
   end
+  
+  def embedtag(s)
+    
+    s.gsub(/\B!\(((?:https?|rse|dfs):\/\/[^\)]+)\)/) do                         
+      RXFHelper.read(source=($1)  ).first        
+    end
+
+  end
+  
   
   def escape(s)
     s.gsub('<','&lt;').gsub('>','&gt;')
