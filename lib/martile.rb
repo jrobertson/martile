@@ -5,6 +5,7 @@
 #require 'rexle-builder'
 #require 'rexle'
 #require 'kvx'
+require 'yatoc'
 require 'rqrcode'
 #require 'dynarex'
 #require 'rdiscount'
@@ -12,6 +13,8 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  17-Dec-2018 Now automatically generates a toc when there are 3 
+#                       sections or more
 # feature:   3-Oct-2018 An embed tag can now be used to dynamically load content
 # bug fix:  26-Sep-2018 An extra new line is added after a code block to 
 #                       ensure the line directly below it is transformed to 
@@ -59,6 +62,7 @@ require 'flowchartviz'
 
 
 class Martile
+  using ColouredText
 
   attr_reader :to_s, :data_source
 
@@ -77,7 +81,7 @@ class Martile
     puts 's10: ' + s10.inspect if debug
     
     s20 = s10 =~ /^__DATA__$/ ? parse__data__(s10) : s10
-    puts 's20: ' + s20.inspect if debug    
+    puts ('s20: ' + s20.inspect).debug if debug    
     
     s30 = apply_filter(s20) {|x| slashpre x }
     #puts 's1 : ' + s1.inspect
@@ -127,11 +131,12 @@ class Martile
     s210 = apply_filter(s200) {|x| qrcodetag x }
     s220 = apply_filter(s210) {|x| svgtag x }
     s230 = apply_filter(s220) {|x| embedtag x }
+    s240 = Yatoc.new(s230).to_html
     
     
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s230
+    @to_s = s240
   end
   
   def create_form(s)
@@ -556,7 +561,7 @@ class Martile
 
   def parse__data__(s)
 
-    puts 'inside parse__data__' if @debug
+    puts 'inside parse__data__'.info if @debug
     
     a = s.split(/^__DATA__$/,2)
 
