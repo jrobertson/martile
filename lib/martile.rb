@@ -64,7 +64,7 @@ require 'flowchartviz'
 class Martile
   using ColouredText
 
-  attr_reader :to_s, :data_source
+  attr_reader :to_s, :to_html, :data_source
 
   def initialize(raw_s='', ignore_domainlabel: nil, debug: false, log: nil)
 
@@ -131,12 +131,16 @@ class Martile
     s210 = apply_filter(s200) {|x| qrcodetag x }
     s220 = apply_filter(s210) {|x| svgtag x }
     s230 = apply_filter(s220) {|x| embedtag x }
-    s240 = Yatoc.new(s230).to_html
     
+    @to_s = s230
+    
+    s240 = Yatoc.new(Kramdown::Document.new(s230).to_html, debug: debug).to_html
+    puts ('s240:'  + s240.inspect).debug if debug    
     
     #puts 's17 : ' + s17.inspect
     
-    @to_s = s240
+    @to_html = s240
+    
   end
   
   def create_form(s)
@@ -167,9 +171,6 @@ class Martile
     
   end
   
-  def to_html()
-    @to_s
-  end
 
   private
   
