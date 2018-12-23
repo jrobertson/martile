@@ -13,6 +13,8 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  23-Dec-2018 A SectionX or KVX object can now be referenced 
+#                       from interpolated variables
 # feature:  17-Dec-2018 Now automatically generates a toc when there are 3 
 #                       sections or more
 # feature:   3-Oct-2018 An embed tag can now be used to dynamically load content
@@ -131,8 +133,9 @@ class Martile
     s210 = apply_filter(s200) {|x| qrcodetag x }
     s220 = apply_filter(s210) {|x| svgtag x }
     s230 = apply_filter(s220) {|x| embedtag x }
+    s240 = apply_filter(s230) {|x| script_out x }
     
-    @to_s = s230
+    @to_s = s240
     
     s240 = Yatoc.new(Kramdown::Document.new(s230).to_html, debug: debug).to_html
     puts ('s240:'  + s240.inspect).debug if debug    
@@ -567,9 +570,32 @@ class Martile
     a = s.split(/^__DATA__$/,2)
 
     data = a[-1]
-
-    data.split(/(?=<\?)/).each do |x|
     
+    links, locals = data.split(/(?=<)/, 2)
+    
+    links.strip.split("\n").each do |line|
+      
+      puts ('line:'  + line.inspect).debug if @debug
+      next if line.nil?
+      
+      id, url = line.split(/:\s+/,2)
+      puts 'id: ' + id.inspect if @debug
+      puts 'url: ' + url.inspect if @debug
+      
+      obj, _ = RXFHelper.read(url, auto: true)
+      define_singleton_method(id.to_sym) { @data_source[id] }
+      @data_source[id] = obj 
+      
+    end
+    
+    puts 'before locals' if @debug
+    
+    locals ||= ''
+    
+    locals.split(/(?=<\?)/).each do |x|
+
+      puts ('__data__ x: ' + x.inspect).debug if @debug
+      
       s2 = x.strip
       next if s2.empty?
       
@@ -589,6 +615,21 @@ class Martile
       when /^<\?flowchart(?:viz)? /
         
         Flowchartviz.new s2        
+        
+      when /^<\?sectionx /
+        
+        sx = SectionX.new
+        sx.import s2
+        define_singleton_method(id.to_sym) { @data_source[id] }
+        sx
+        
+      when /^<\?kvx /
+        
+        kvx = Kvx.new s2
+
+        define_singleton_method(id.to_sym) { @data_source[id] }
+        kvx        
+        
       end    
     end
     
@@ -632,7 +673,11 @@ class Martile
 
     s.gsub(/\^[\w ]+\^/) {|x| "<mark>%s</mark>" % x[1..-2] }
 
-  end  
+  end
+
+  def script_out(s)
+    s.gsub(/({!)[^}]+\}/) {|x| eval(x[/(?<={!)[^}]+/]) }
+  end
   
   def smartlink(s)
         
