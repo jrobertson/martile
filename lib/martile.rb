@@ -137,12 +137,12 @@ class Martile
     
     @to_s = s240
     
-    s240 = Yatoc.new(Kramdown::Document.new(s230).to_html, debug: debug).to_html
-    puts ('s240:'  + s240.inspect).debug if debug    
+    s250 = Yatoc.new(Kramdown::Document.new(s240).to_html, debug: debug).to_html
+    puts ('s250:'  + s250.inspect).debug if debug    
     
     #puts 's17 : ' + s17.inspect
     
-    @to_html = s240
+    @to_html = s250
     
   end
   
