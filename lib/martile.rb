@@ -223,7 +223,7 @@ class Martile
 
   def details(s)
     
-    puts 'inside details: ' + s.inspect
+    puts ('inside details: ' + s.inspect).debug if @debug
     
     s.split(/(?=\!\+)/).map do |x|
       
