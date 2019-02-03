@@ -105,13 +105,13 @@ class Martile
     #puts 's7 : ' + s7.inspect
 
     s90 = apply_filter(s80) {|x| underline x}
-    #puts 's8: ' + s8.inspect
+    puts 's90: ' + s90.inspect if @debug
     s100 = apply_filter(s90) {|x| section x }
-    #puts 's9: ' + s9.inspect
+    puts 's100: ' + s100.inspect if @debug
     
     s110 = apply_filter(s100) {|x| smartlink x }
 
-    #puts 's10: ' + s10.inspect
+    puts 's110: ' + s110.inspect if @debug
 
     #s11 = section s9
     #puts 's11 : ' + s11.inspect
@@ -138,7 +138,7 @@ class Martile
     @to_s = s240
     
     s250 = Yatoc.new(Kramdown::Document.new(s240).to_html, debug: debug).to_html
-    puts ('s250:'  + s250.inspect).debug if debug    
+    puts ('s250: '  + s250.inspect).debug if debug    
     
     #puts 's17 : ' + s17.inspect
     
@@ -720,6 +720,7 @@ class Martile
         if r.last.length > 0 and r.last.first[/<section/] then
 
           list = r.pop
+          puts ('section | list: ' + list.inspect).debug if @debug
 
           r << ["%s%s</section>" % 
                  [list[0], \
@@ -727,6 +728,7 @@ class Martile
                       ignore_domainlabel: @ignore_domainlabel).to_html
                  ]
                ]
+          puts ('section | r: ' + r.inspect) if @debug
           r << []
         else
 
