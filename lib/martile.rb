@@ -13,6 +13,8 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  11-Feb-2019 An apostrophe used between words is now preserved 
+#                       from Kramdown HTML rendering
 # feature:  23-Dec-2018 A SectionX or KVX object can now be referenced 
 #                       from interpolated variables
 # feature:  17-Dec-2018 Now automatically generates a toc when there are 3 
@@ -137,12 +139,13 @@ class Martile
     
     @to_s = s240
     
-    s250 = Yatoc.new(Kramdown::Document.new(s240).to_html, debug: debug).to_html
-    puts ('s250: '  + s250.inspect).debug if debug    
+    s250 = apply_filter(s240) {|x| nomarkdown x }
+    s260 = Yatoc.new(Kramdown::Document.new(s250).to_html, debug: debug).to_html
+    puts ('s260: '  + s260.inspect).debug if debug    
     
     #puts 's17 : ' + s17.inspect
     
-    @to_html = s250
+    @to_html = s260
     
   end
   
@@ -444,6 +447,10 @@ class Martile
       x.sub(/-([&\w]+.*\w+)-/,'<del>\1</del>')
     end    
 
+  end
+  
+  def nomarkdown(s)
+    s.gsub(/\b'\b/,"{::nomarkdown}'{:/}")
   end
   
   def qrcodetag(s)
