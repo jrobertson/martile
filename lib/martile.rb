@@ -13,6 +13,8 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  16-Feb-2019 A hidden field cam now be rendered using 
+#                       the syntax [? name: value]                       
 # feature:  11-Feb-2019 An apostrophe used between words is now preserved 
 #                       from Kramdown HTML rendering
 # feature:  23-Dec-2018 A SectionX or KVX object can now be referenced 
@@ -151,9 +153,9 @@ class Martile
   
   def create_form(s)
 
-    a = LineTree.new(s).to_a
-    
-    def create_form_item(raw_name)
+    a = LineTree.new(s, ignore_blank_lines: true).to_a
+        
+    def create_form_input(raw_name)
 
       name = raw_name.downcase[/\w+/]
       type =  name =~ /password/ ? :password : :text
@@ -164,16 +166,26 @@ class Martile
       ]
     end
     
-    a2 = a[0][1..-1].select {|x| x[0] =~ /[^:]+\:/}.map do |x|
-      create_form_item(x[0][/[^:]+\:/])
+    a2 = a[0][1..-1].select {|x| x[0] =~ /[^:]+\:/}.map do |items|
+            
+      line = items[0]
+      case line
+      when /^\w/
+        create_form_input(line[/^\w[^:]+\:/])
+      when /!/
+        name, value = line.match(/\[\s*!\s+([^:]+):\s+([^\]]+)/).captures
+        ['input', {type: 'hidden', name: name, value: value}]
+      end
     end
 
-    button_name, link = s.match(/\[([^\]]+)\]\(["']([^"']+)["']\)/).captures
+    button_name, link = s.match(/\[([^\]]+)\]\(([^\)]+)\)/).captures
 
     a2 << ['div', {class: 'button'}, ['button', {type: 'submit'}, button_name]]
 
     a2.insert 0, 'form', {id: a[0][0], action: link, method: 'post'}
-    Rexle.new(a2).xml pretty: true, declaration: false
+    doc = Rexle.new(a2)
+    doc.root.element('div/input').attributes['autofocus'] = 'true'
+    doc.xml pretty: true, declaration: false
     
   end
   
@@ -300,7 +312,7 @@ class Martile
     
     s.split(/(?=\n\w+)/).map do |s|
       
-      if s =~ /(?=\w+\n  \w+: +\[ +\])/ then
+      if s =~ /(?=\w+\n\n*  \w+: +\[ +\])/ then
         create_form(s)
       else
         s
