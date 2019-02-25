@@ -13,6 +13,8 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# bug fix:  25-Feb-2019 The section content is now rendered using to_s 
+#                       instead of to_html
 # feature:  16-Feb-2019 A hidden field cam now be rendered using 
 #                       the syntax [? name: value]                       
 # feature:  11-Feb-2019 An apostrophe used between words is now preserved 
@@ -109,9 +111,9 @@ class Martile
     #puts 's7 : ' + s7.inspect
 
     s90 = apply_filter(s80) {|x| underline x}
-    puts 's90: ' + s90.inspect if @debug
+    puts ('s90: ' + s90.inspect).debug if @debug
     s100 = apply_filter(s90) {|x| section x }
-    puts 's100: ' + s100.inspect if @debug
+    puts ('s100: ' + s100.inspect).debug if @debug
     
     s110 = apply_filter(s100) {|x| smartlink x }
 
@@ -744,7 +746,7 @@ class Martile
           r << ["%s%s</section>" % 
                  [list[0], \
                   Martile.new(list[1..-1].join, \
-                      ignore_domainlabel: @ignore_domainlabel).to_html
+                      ignore_domainlabel: @ignore_domainlabel).to_s
                  ]
                ]
           puts ('section | r: ' + r.inspect) if @debug
