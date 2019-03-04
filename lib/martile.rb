@@ -13,6 +13,7 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  03-Mar-2019 A high level mindmap with associated doc can now be easily created using the -mm---identifier
 # bug fix:  25-Feb-2019 The section content is now rendered using to_s 
 #                       instead of to_html
 # feature:  16-Feb-2019 A hidden field cam now be rendered using 
@@ -72,7 +73,7 @@ require 'flowchartviz'
 class Martile
   using ColouredText
 
-  attr_reader :to_s, :to_html, :data_source
+  attr_reader :to_s, :to_html, :data_source, :to_css
 
   def initialize(raw_s='', ignore_domainlabel: nil, debug: false, log: nil)
 
@@ -81,13 +82,15 @@ class Martile
     @data_source = {}
     
     @ignore_domainlabel, @log = ignore_domainlabel, log
+    
+    @css = []
 
     raw_s.gsub!("\r",'')
     
     
-    s10 = MindmapDoc.new(debug: debug).transform(raw_s)
-    puts 's10: ' + s10.inspect if debug
-    
+    s5 = MindmapDoc.new(debug: debug).to_mmd(raw_s)
+    s10 = MindmapDoc.new(debug: debug).transform(s5)
+    puts 's10: ' + s10.inspect if debug    
     s20 = s10 =~ /^__DATA__$/ ? parse__data__(s10) : s10
     puts ('s20: ' + s20.inspect).debug if debug    
     
@@ -189,6 +192,10 @@ class Martile
     doc.root.element('div/input').attributes['autofocus'] = 'true'
     doc.xml pretty: true, declaration: false
     
+  end
+  
+  def to_css()
+    @css.join("\n")
   end
   
 
