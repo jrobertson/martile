@@ -13,7 +13,9 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
-# feature:  03-Mar-2019 A high level mindmap with associated doc can now be easily created using the -mm---identifier
+# improvment: 06-Mar-2019 Checks for mindmap tags outside of other tags
+# feature:  03-Mar-2019 A high level mindmap with associated doc can now be 
+#                       easily created using the -mm---identifier
 # bug fix:  25-Feb-2019 The section content is now rendered using to_s 
 #                       instead of to_html
 # feature:  16-Feb-2019 A hidden field cam now be rendered using 
@@ -87,9 +89,9 @@ class Martile
 
     raw_s.gsub!("\r",'')
     
-    
-    s5 = MindmapDoc.new(debug: debug).to_mmd(raw_s)
-    s10 = MindmapDoc.new(debug: debug).transform(s5)
+    mmd = MindmapDoc.new(debug: debug)
+    s5 = apply_filter(raw_s) {|x| mmd.to_mmd(x) }
+    s10 = apply_filter(s5) {|x| mmd.transform(s5) }
     puts 's10: ' + s10.inspect if debug    
     s20 = s10 =~ /^__DATA__$/ ? parse__data__(s10) : s10
     puts ('s20: ' + s20.inspect).debug if debug    
