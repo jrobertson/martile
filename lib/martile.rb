@@ -13,6 +13,7 @@ require 'mindmapdoc'
 require 'flowchartviz'
 
 
+# feature:  05-May-2019 Dimensions can now be supplied for an iframe
 # improvment: 06-Mar-2019 Checks for mindmap tags outside of other tags
 # feature:  03-Mar-2019 A high level mindmap with associated doc can now be 
 #                       easily created using the -mm---identifier
@@ -335,12 +336,18 @@ class Martile
   
   def iframetag(s)
     
-    s.gsub(/\B!i\[\]\((https?:\/\/[^\)]+)\)\B/) do |x|
+    s.gsub(/\B!i\[\]\((https?:\/\/[^\)]+)\)(\{[^\}]+\})?/) do |x|
       
       url = ($1)
+      attr = ($2)
 
-      "<iframe src='%s'></iframe>" % [url]
-    end    
+      h = attr ? attr.scan(/(\w+):\s+['"]?(\w+)?/).to_h : {}
+      attributes = h.any? ? (' ' + 
+                            h.map {|k,v| "%s='%s'" % [k,v]}.join(' ')) : ''
+
+      "<iframe src='%s'%s></iframe>" % [url, attributes]
+    end
+
 
   end
   

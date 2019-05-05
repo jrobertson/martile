@@ -1,13 +1,13 @@
 Gem::Specification.new do |s|
   s.name = 'martile'
-  s.version = '1.1.8'
+  s.version = '1.1.9'
   s.summary = 'Martile is a Markdown pre formatter which is designed to ' + 
       'format custom Markdown tags prior to being passed to the Markdown gem.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/martile.rb']
   s.add_runtime_dependency('yatoc', '~> 0.3', '>=0.3.5')  
   s.add_runtime_dependency('rqrcode', '~> 0.10', '>=0.10.1')  
-  s.add_runtime_dependency('mindmapdoc', '~> 0.3', '>=0.3.3')
+  s.add_runtime_dependency('mindmapdoc', '~> 0.3', '>=0.3.4')
   s.add_runtime_dependency('flowchartviz', '~> 0.1', '>=0.1.6')
   s.signing_key = '../privatekeys/martile.pem'
   s.cert_chain  = ['gem-public_cert.pem']
