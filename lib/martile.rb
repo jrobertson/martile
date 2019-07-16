@@ -11,8 +11,10 @@ require 'rqrcode'
 #require 'rdiscount'
 require 'mindmapdoc'
 require 'flowchartviz'
+require 'jsmenubuilder'
 
 
+# feature:  16-Jul-2019 An HTML Tabs component can now be created from XML
 # feature:  05-May-2019 Dimensions can now be supplied for an iframe
 # improvment: 06-Mar-2019 Checks for mindmap tags outside of other tags
 # feature:  03-Mar-2019 A high level mindmap with associated doc can now be 
@@ -76,7 +78,7 @@ require 'flowchartviz'
 class Martile
   using ColouredText
 
-  attr_reader :to_s, :to_html, :data_source, :to_css
+  attr_reader :to_s, :to_html, :data_source
 
   def initialize(raw_s='', ignore_domainlabel: nil, debug: false, log: nil)
 
@@ -86,14 +88,15 @@ class Martile
     
     @ignore_domainlabel, @log = ignore_domainlabel, log
     
-    @css = []
+    @css, @js = [], []
 
     raw_s.gsub!("\r",'')
     
     mmd = MindmapDoc.new(debug: debug)
     s5 = apply_filter(raw_s) {|x| mmd.to_mmd(x) }
     s10 = apply_filter(s5) {|x| mmd.transform(s5) }
-    puts 's10: ' + s10.inspect if debug    
+    #puts 's10: ' + s10.inspect if debug
+    #s10 = raw_s
     s20 = s10 =~ /^__DATA__$/ ? parse__data__(s10) : s10
     puts ('s20: ' + s20.inspect).debug if debug    
     
@@ -147,10 +150,12 @@ class Martile
     s230 = apply_filter(s220) {|x| embedtag x }
     s240 = apply_filter(s230) {|x| script_out x }
     
-    @to_s = s240
+    @to_s = s240.to_s
     
     s250 = apply_filter(s240) {|x| nomarkdown x }
-    s260 = Yatoc.new(Kramdown::Document.new(s250).to_html, debug: debug).to_html
+    
+    s255 = tabs(s250)
+    s260 = Yatoc.new(Kramdown::Document.new(s255).to_html, debug: debug).to_html
     puts ('s260: '  + s260.inspect).debug if debug    
     
     #puts 's17 : ' + s17.inspect
@@ -201,7 +206,10 @@ class Martile
     @css.join("\n")
   end
   
-
+  def to_js()
+    @js.join("\n")
+  end
+  
   private
   
   def audiotag(s)
@@ -653,6 +661,18 @@ class Martile
         
         Flowchartviz.new s2        
         
+      when /^<\?graphvizml /
+        
+        GraphVizML.new s2        
+                
+      when /^<\?pxgraphviz /
+        puts 'before PxGraphViz.new'.info if @debug
+        PxGraphViz.new s2, debug: @debug                        
+                
+      when /^<\?depviz /
+        
+        DepViz.new s2          
+        
       when /^<\?sectionx /
         
         sx = SectionX.new
@@ -696,6 +716,39 @@ class Martile
       r
     end
     return s
+  end
+  
+  def tabs(s1)
+    
+    s = s1.clone
+    
+    doc = Rexle.new("<root>#{s}</root>")
+    
+    a = doc.root.xpath('tabs').map.with_index do |e, i |
+      
+      build = JsMenuBuilder.new()
+      build.import(e.xml)
+      
+      if i < 1 then
+        @css << build.to_css 
+        @js << build.to_js
+      end
+      
+      build.to_html
+      
+    end
+    
+    a.each do |html|
+      
+      istart = s =~ /^<tabs[^>]*>/
+      iend = s =~ /^<\/tabs>/
+      s.slice!(istart, (iend - istart) + '</tab>'.length + 1)
+      s.insert(istart, html)
+      
+    end
+    
+    return s
+    
   end
 
   def underline(s)
