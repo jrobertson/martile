@@ -15,6 +15,7 @@ require 'jsmenubuilder'
 
 
 # feature:  16-Jul-2019 An HTML Tabs component can now be created from XML
+#                       XML can now be created using !tag notation e.g. !tabs
 # feature:  05-May-2019 Dimensions can now be supplied for an iframe
 # improvment: 06-Mar-2019 Checks for mindmap tags outside of other tags
 # feature:  03-Mar-2019 A high level mindmap with associated doc can now be 
@@ -154,7 +155,8 @@ class Martile
     
     s250 = apply_filter(s240) {|x| nomarkdown x }
     
-    s255 = tabs(s250)
+    s253 = bang_xml(s250)
+    s255 = tabs(s253)
     s260 = Yatoc.new(Kramdown::Document.new(s255).to_html, debug: debug).to_html
     puts ('s260: '  + s260.inspect).debug if debug    
     
@@ -228,7 +230,30 @@ class Martile
       "<audio controls='controls'>\n%s\n</audio>" % [sources.join("\n")]
     end    
 
-  end    
+  end
+  
+  def bang_xml(s)
+
+    indent = -> (line) { '  ' + line }    
+    a = s.split(/(?=^\!\w+)/)    
+    
+    a.map do |s|
+      
+      if s =~ /^!!/ then
+
+        parent, children = s.split(/^!!/,2)
+        tree = parent.sub(/^!/,'') + children.split(/^!!/).map do |x|
+          x.lines[1..-1].map(&indent).unshift(x.lines[0]).map(&indent)
+        end.join
+
+        LineTree.new(tree).to_xml(declaration: false)
+
+      else
+        s
+      end
+      
+    end.join
+  end
 
   def code_block_to_html(s)
 
@@ -741,7 +766,7 @@ class Martile
     a.each do |html|
       
       istart = s =~ /^<tabs[^>]*>/
-      iend = s =~ /^<\/tabs>/
+      iend = s =~ /<\/tabs>/
       s.slice!(istart, (iend - istart) + '</tab>'.length + 1)
       s.insert(istart, html)
       
