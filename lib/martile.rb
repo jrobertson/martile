@@ -14,6 +14,8 @@ require 'flowchartviz'
 require 'jsmenubuilder'
 
 
+# feature:  16-Sep-2019 An HTML Tree component can now be generated when 
+#                       the tag <sidebar/> is used
 # feature:  16-Jul-2019 An HTML Tabs component can now be created from XML
 #                       XML can now be created using !tag notation e.g. !tabs
 # feature:  05-May-2019 Dimensions can now be supplied for an iframe
@@ -81,7 +83,8 @@ class Martile
 
   attr_reader :to_s, :to_html, :data_source
 
-  def initialize(raw_s='', ignore_domainlabel: nil, debug: false, log: nil)
+  def initialize(raw_s='', ignore_domainlabel: nil, toc: true, debug: false, 
+                 log: nil)
 
 
     @debug = debug
@@ -154,14 +157,24 @@ class Martile
     @to_s = s240.to_s
     
     s250 = apply_filter(s240) {|x| nomarkdown x }
-    
-    s253 = bang_xml(s250)
+    s252 = sidenav(s250)
+    s253 = bang_xml(s252)
+    puts ('s235 after bang_xml: ' + s253.inspect).debug if @debug
+
     s255 = tabs(s253)
-    s260 = Yatoc.new(Kramdown::Document.new(s255).to_html, debug: debug).to_html
-    puts ('s260: '  + s260.inspect).debug if debug    
+    puts ('s255 after tabs: ' + s255.inspect).debug if @debug
     
+    toc = false if s255 =~ /class=['"]sidenav['"]>/ 
+    
+    s260 = if toc then
+      Yatoc.new(Kramdown::Document.new(s255).to_html, debug: debug).to_html
+    else
+      s255
+    end
+    
+    puts ('s260: '  + s260.inspect).debug if debug        
     #puts 's17 : ' + s17.inspect
-    
+
     @to_html = s260
     
   end
@@ -718,6 +731,28 @@ class Martile
     a[0..-2].join
     
   end
+  
+  def sidenav(s1)
+    
+    s = s1.clone
+    if s =~ /^<sidenav\/>/ then
+      
+      s.sub!(/^<sidenav\/>/,'')
+      #jtb = JsTreeBuilder.new :tree, {src: tree, debug: true}
+      jtb = JsTreeBuilder.new(:sidebar, {src: s, hn: 2, debug: true})
+      html = jtb.to_webpage
+      doc = Rexle.new(html)
+      html2 = Kramdown::Document.new(Martile.new(s, toc: false).to_html)\
+        .to_html
+      div = Rexle.new("<div class='main'>%s</div>" % html2)
+
+      doc.root.element('body/ul').insert_after  div.root
+      doc.xml(declaration: false)
+    else
+      s1
+    end
+
+  end
 
   def table_to_html(s)
     
@@ -748,7 +783,7 @@ class Martile
     s = s1.clone
     
     doc = Rexle.new("<root>#{s}</root>")
-    
+    puts 'doc.root.xml: ' + doc.root.xml.inspect if @debug
     a = doc.root.xpath('tabs').map.with_index do |e, i |
       
       build = JsMenuBuilder.new()
@@ -762,7 +797,9 @@ class Martile
       build.to_html
       
     end
-    
+    puts 'tabs a:' + a.inspect if @debug
+
+    # replaces the <tabs> XML with HTML
     a.each do |html|
       
       istart = s =~ /^<tabs[^>]*>/
