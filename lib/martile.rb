@@ -12,8 +12,11 @@ require 'rqrcode'
 require 'mindmapdoc'
 require 'flowchartviz'
 require 'jsmenubuilder'
+require 'htmlcom'
 
 
+# feature:  22-Jan-2020 An HtmlCom::Accordion component can now be generated
+#                       using the tag <accordion>
 # feature:  16-Sep-2019 An HTML Tree component can now be generated when 
 #                       the tag <sidebar/> is used
 # feature:  16-Jul-2019 An HTML Tabs component can now be created from XML
@@ -164,12 +167,14 @@ class Martile
     s255 = tabs(s253)
     puts ('s255 after tabs: ' + s255.inspect).debug if @debug
     
-    toc = false if s255 =~ /class=['"]sidenav['"]>/ 
+    s257 = accordion(s255)
+    
+    toc = false if s257 =~ /class=['"]sidenav['"]>/ 
     
     s260 = if toc then
-      Yatoc.new(Kramdown::Document.new(s255).to_html, debug: debug).to_html
+      Yatoc.new(Kramdown::Document.new(s257).to_html, debug: debug).to_html
     else
-      s255
+      s257
     end
     
     puts ('s260: '  + s260.inspect).debug if debug        
@@ -226,6 +231,41 @@ class Martile
   end
   
   private
+  
+  def accordion(s1)
+    
+    s = s1.clone
+    
+    doc = Rexle.new("<root>#{s}</root>")
+    puts 'doc.root.xml: ' + doc.root.xml.inspect if @debug
+    a = doc.root.xpath('accordion').map.with_index do |e, i |
+      
+      build = HtmlCom::Accordion.new(e.xml, debug: false)
+      
+      if i < 1 then
+        @css << build.to_css 
+        @js << build.to_js
+      end
+      
+      build.to_html
+      
+      
+    end
+    puts 'accordion a:' + a.inspect if @debug
+
+    # replaces the <accordion> XML with HTML
+    a.each do |html|
+      
+      istart = s =~ /^<accordion[^>]*>/
+      iend = s =~ /<\/accordion>/
+      s.slice!(istart, (iend - istart) + '</accordion>'.length + 1)
+      s.insert(istart, html)
+      
+    end
+    
+    return s
+    
+  end  
   
   def audiotag(s)
     
@@ -305,7 +345,8 @@ class Martile
         x[2..-1].sub(/(.*)[^\+]+\n\+/m) do |x2|
 
           summary, detail = x2.split(/----+/,2)
-          "<details><summary>%s</summary>%s</details>" % [summary, detail.chop]
+          "<details><summary>%s</summary>%s</details>" % \
+              [summary, Martile.new(detail.chop).to_html]
 
         end
         
@@ -739,7 +780,7 @@ class Martile
       
       s.sub!(/^<sidenav\/>/,'')
       #jtb = JsTreeBuilder.new :tree, {src: tree, debug: true}
-      jtb = JsTreeBuilder.new(:sidebar, {src: s, hn: 2, debug: true})
+      jtb = JsTreeBuilder.new(:sidebar, {src: s, hn: 2, debug: @debug})
       html = jtb.to_webpage
       doc = Rexle.new(html)
       html2 = Kramdown::Document.new(Martile.new(s, toc: false).to_html)\
