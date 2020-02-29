@@ -15,6 +15,7 @@ require 'jsmenubuilder'
 require 'htmlcom'
 
 
+# feature:  29-Feb-2020 The sidenav tag can now contain a raw hierachical list
 # feature:  22-Jan-2020 An HtmlCom::Accordion component can now be generated
 #                       using the tag <accordion>
 # feature:  16-Sep-2019 An HTML Tree component can now be generated when 
@@ -776,13 +777,37 @@ class Martile
   def sidenav(s1)
     
     s = s1.clone
-    if s =~ /^<sidenav\/>/ then
+    if s =~ /^<sidenav/ then
       
-      s.sub!(/^<sidenav\/>/,'')
-      #jtb = JsTreeBuilder.new :tree, {src: tree, debug: true}
-      jtb = JsTreeBuilder.new(:sidebar, {src: s, hn: 2, debug: @debug})
-      html = jtb.to_webpage
-      doc = Rexle.new(html)
+      content = s[/<sidenav[^>]+>[^<]+<[^>]+>/]
+      puts ('content: ' + content.inspect) if @debug
+      
+      doc = if content then
+      
+        s.sub!(content,'')
+        doc2 = Rexle.new(content)
+        target = doc2.root.attributes[:target] || 'pgview'
+        txt = doc2.root.text
+        puts 'txt: ' + txt.inspect if @debug
+        
+        html = HtmlCom::Tree.new(txt).to_webpage
+        puts 'html: ' + html.inspect if @debug        
+        
+        doc2 = Rexle.new(html)
+        
+        doc2.root.xpath('body/ul[@class="sidenav"]/li//a').each do |node|
+          node.attributes[:target] = target
+        end
+        
+        doc2
+        
+      else
+        s.sub!(/^<sidenav\/>/,'')
+        html = HtmlCom::Tree.new(s).to_webpage
+        Rexle.new(html)
+      end
+      
+      
       html2 = Kramdown::Document.new(Martile.new(s, toc: false).to_html)\
         .to_html
       div = Rexle.new("<div class='main'>%s</div>" % html2)
