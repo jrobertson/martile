@@ -15,6 +15,7 @@ require 'jsmenubuilder'
 require 'htmlcom'
 
 
+# feature:  01-Mar-2020 A src attribute can now be used in the sidenav tag
 # feature:  29-Feb-2020 The sidenav tag can now contain a raw hierachical list
 # feature:  22-Jan-2020 An HtmlCom::Accordion component can now be generated
 #                       using the tag <accordion>
@@ -786,8 +787,16 @@ class Martile
       
         s.sub!(content,'')
         doc2 = Rexle.new(content)
-        target = doc2.root.attributes[:target] || 'pgview'
-        txt = doc2.root.text
+        
+        h = doc2.root.attributes
+        target = h[:target] || 'pgview'
+        
+        txt = if h[:src] then
+          RXFHelper.read(h[:src]).first.sub(/<\?links[^>]+>\n/,'')
+        else
+          doc2.root.text
+        end
+    
         puts 'txt: ' + txt.inspect if @debug
         
         html = HtmlCom::Tree.new(txt).to_webpage
