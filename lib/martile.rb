@@ -15,6 +15,7 @@ require 'jsmenubuilder'
 require 'htmlcom'
 
 
+# improvement:  23-Apr-2020 A self-closing sidenav tag is now valid
 # feature:  01-Mar-2020 A src attribute can now be used in the sidenav tag
 # feature:  29-Feb-2020 The sidenav tag can now contain a raw hierachical list
 # feature:  22-Jan-2020 An HtmlCom::Accordion component can now be generated
@@ -780,7 +781,7 @@ class Martile
     s = s1.clone
     if s =~ /^<sidenav/ then
       
-      content = s[/<sidenav[^>]+>[^<]+<[^>]+>/]
+      content = s[/(<sidenav[^>]+\/>|<sidenav[^>]+>([^<]*<[^>]+>)?)/]
       puts ('content: ' + content.inspect) if @debug
       
       doc = if content then
