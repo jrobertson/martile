@@ -15,6 +15,7 @@ require 'jsmenubuilder'
 require 'htmlcom'
 
 
+# feature:  08-Aug-2020 Implemented #to_Webpage
 # improvement:  23-Apr-2020 A self-closing sidenav tag is now valid
 # feature:  01-Mar-2020 A src attribute can now be used in the sidenav tag
 # feature:  29-Feb-2020 The sidenav tag can now contain a raw hierachical list
@@ -231,6 +232,30 @@ class Martile
   
   def to_js()
     @js.join("\n")
+  end
+  
+  def to_webpage()
+
+    a = RexleBuilder.build do |xml|
+      xml.html do 
+        xml.head do
+          xml.meta name: "viewport", content: \
+              "width=device-width, initial-scale=1"
+          xml.style "\nbody {font-family: Arial;}\n\n" + @css.join("\n")
+        end
+        xml.body to_html()
+      end
+    end
+
+    doc = Rexle.new(a)    
+    
+    doc.root.element('body').add \
+        Rexle::Element.new('script').add_text "\n" + 
+        @js.join("\n").gsub(/^ +\/\/[^\n]+\n/,'')
+    
+    "<!DOCTYPE html>\n" + doc.xml(pretty: true, declaration: false)\
+        .gsub(/<\/div>/,'\0' + "\n").gsub(/\n *<!--[^>]+>/,'')
+       
   end
   
   private
