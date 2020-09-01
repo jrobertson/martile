@@ -119,7 +119,7 @@ class Martile
     #puts 's1 : ' + s1.inspect
     s40 = apply_filter(s30) {|x| code_block_to_html(x.strip + "\n") }
 
-    s45 = s40.gsub(/<pre/,'{::nomarkdown}\0').gsub(/<\/pre>/,'\0{:/}')
+    s45 = s40.gsub(/<pre[^>]*>/,'\0{::nomarkdown2}').gsub(/<\/pre>/,'{:2/}\0')
     #puts 's2 : ' + s2.inspect
     #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
     #puts 's3 : ' + s3.inspect
