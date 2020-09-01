@@ -15,6 +15,10 @@ require 'jsmenubuilder'
 require 'htmlcom'
 
 
+# feature:  01-Sep-2020 Introduced the nomarkdown tag and nomarkdown2 tag.
+#                       The nomarkdown2 tag has the advantage of being used 
+#                       inside tags which other Markdown parse don't read. 
+#                       The tag will remove itself before completion to_s.
 # feature:  08-Aug-2020 Implemented #to_Webpage
 # improvement:  23-Apr-2020 A self-closing sidenav tag is now valid
 # feature:  01-Mar-2020 A src attribute can now be used in the sidenav tag
@@ -115,10 +119,11 @@ class Martile
     #puts 's1 : ' + s1.inspect
     s40 = apply_filter(s30) {|x| code_block_to_html(x.strip + "\n") }
 
+    s45 = s40.gsub(/<pre/,'{::nomarkdown}\0').gsub(/<\/pre>/,'\0{:/}')
     #puts 's2 : ' + s2.inspect
     #s3 = apply_filter(s2, %w(ol ul)) {|x| explicit_list_to_html x }
     #puts 's3 : ' + s3.inspect
-    s50 = apply_filter(s40) {|x| ordered_list_to_html x }
+    s50 = apply_filter(s45) {|x| ordered_list_to_html x }
     #puts 's4 : ' + s4.inspect
 
     s60 = apply_filter(s50) {|x| unordered_list_to_html x }
@@ -160,10 +165,10 @@ class Martile
     s220 = apply_filter(s210) {|x| svgtag x }
     s230 = apply_filter(s220) {|x| embedtag x }
     s240 = apply_filter(s230) {|x| script_out x }
+    s245 = s240.gsub(/\{::nomarkdown2\}/,'').gsub(/\{:2\/\}/,'')
+    @to_s = s245.to_s
     
-    @to_s = s240.to_s
-    
-    s250 = apply_filter(s240) {|x| nomarkdown x }
+    s250 = apply_filter(s245) {|x| nomarkdown x }
     s252 = sidenav(s250)
     s253 = bang_xml(s252)
     puts ('s235 after bang_xml: ' + s253.inspect).debug if @debug
@@ -502,15 +507,16 @@ class Martile
 
     @filter = []
 
-    a = s.split(/(?=<pre)/).map.with_index do |row, i|
+    a = s.split(/(?=\{::nomarkdown2?\})/).map.with_index do |row, i|
       
-      row.sub(/<pre.*<\/pre>/m) do |pattern|
+      row.sub(/\{::nomarkdown2?\}.*{:2?\/}/m) do |pattern|
         placeholder = '!' + Time.now.to_i.to_s + i.to_s
         @filter << [placeholder, pattern]
         placeholder
       end
 
     end
+
     a.join
     
   end  
