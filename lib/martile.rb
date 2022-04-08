@@ -194,7 +194,8 @@ class Martile
     puts 's240 : ' + s240.inspect if @debug
     s245 = s240.gsub(/\{::nomarkdown2\}/,'').gsub(/\{:2\/\}/,'')
     puts 's245 : ' + s245.inspect if @debug
-    @to_s = s245.to_s
+    s246 = mindwords(s245)
+    @to_s = s246.to_s
 
     s250 = apply_filter(s245) {|x| nomarkdown x }
     puts 's250 : ' + s250.inspect if @debug
@@ -206,9 +207,7 @@ class Martile
     s255 = tabs(s253)
     puts ('s255 after tabs: ' + s255.inspect).debug if @debug
 
-    s256 = mindwords(s255)
-
-    s257 = accordion(s256)
+    s257 = accordion(s255)
     puts 's257 : ' + s257.inspect if @debug
 
     toc = false if s257 =~ /class=['"]sidenav['"]>/
