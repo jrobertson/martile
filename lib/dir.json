@@ -1,0 +1,43 @@
+{
+  "directory": {
+    "summary": {
+      "schema": "directory[title, file_path,  last_modified, description]/file(name, type, ext, mtime, description)",
+      "recordx_type": "dynarex",
+      "default_key": "name",
+      "title": "Index of /home/james/gem_src/martile/lib",
+      "file_path": "/home/james/gem_src/martile/lib",
+      "last_modified": "2022-03-06 12:20:36 +0000",
+      "description": null
+    },
+    "records": [
+      {
+        "file": {
+          "id": "1",
+          "created": "2022-03-06 12:20:36 +0000",
+          "last_modified": null,
+          "body": {
+            "name": "martile.rb~",
+            "type": "file",
+            "ext": ".rb~",
+            "mtime": "2019-11-22 17:32:18 +0000",
+            "description": ""
+          }
+        }
+      },
+      {
+        "file": {
+          "id": "2",
+          "created": "2022-03-06 12:20:36 +0000",
+          "last_modified": null,
+          "body": {
+            "name": "martile.rb",
+            "type": "file",
+            "ext": ".rb",
+            "mtime": "2022-03-01 10:01:25 +0000",
+            "description": ""
+          }
+        }
+      }
+    ]
+  }
+}

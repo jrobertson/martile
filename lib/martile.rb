@@ -13,8 +13,11 @@ require 'mindmapdoc'
 require 'flowchartviz'
 require 'jsmenubuilder'
 require 'htmlcom'
+require 'rxfhelper'
+require 'mindwords'
 
 
+# feature:  08-Apr-2022 A <mindwords> tag an now be embedded
 # bug fix:  01-Feb-2022 When a Martile document has nomarkdown2 tags applied,
 #                       they will no longer be applied from a
 #                       nested Martile statement
@@ -203,7 +206,9 @@ class Martile
     s255 = tabs(s253)
     puts ('s255 after tabs: ' + s255.inspect).debug if @debug
 
-    s257 = accordion(s255)
+    s256 = mindwords(s255)
+
+    s257 = accordion(s256)
     puts 's257 : ' + s257.inspect if @debug
 
     toc = false if s257 =~ /class=['"]sidenav['"]>/
@@ -458,7 +463,7 @@ class Martile
   def embedtag(s)
 
     s.gsub(/\B!\(((?:https?|rse|dfs):\/\/[^\)]+)\)/) do
-      RXFHelper.read(source=($1)  ).first
+      RXFReader.read(source=($1)  ).first
     end
 
   end
@@ -745,6 +750,35 @@ class Martile
 
     end
 
+
+  def mindwords(s1)
+
+    s = s1.clone
+
+    doc = Rexle.new("<root>#{s}</root>")
+    puts 'doc.root.xml: ' + doc.root.xml.inspect if @debug
+    a = doc.root.xpath('mindwords').map.with_index do |e, i |
+      puts 'e: ' + e.text.inspect if @debug
+      "<pre>%s</pre>" % MindWords.new(e.text).to_outline
+
+    end
+    puts 'mindwords a:' + a.inspect if @debug
+
+    # replaces the <mindwords> XML with HTML
+    a.each do |html|
+
+      istart = s =~ /^<mindwords[^>]*>/
+      iend = s =~ /<\/mindwords>/
+      puts [istart, iend].inspect if @debug
+      s.slice!(istart, (iend - istart) + '</mindwords>'.length + 1)
+      s.insert(istart, html)
+
+    end
+
+    return s
+
+  end
+
   def unordered_list_to_html(s)
     list_to_html s, '\*'
   end
@@ -852,7 +886,7 @@ class Martile
         target = h[:target] || 'pgview'
 
         txt = if h[:src] then
-          RXFHelper.read(h[:src]).first.sub(/<\?links[^>]+>\n/,'')
+          RXFReader.read(h[:src]).first.sub(/<\?links[^>]+>\n/,'')
         else
           doc2.root.text
         end
@@ -1043,7 +1077,7 @@ class Martile
 
       svg = if source =~ /^http/ then
 
-        RXFHelper.read(source).first
+        RXFReader.read(source).first
 
       else
 
