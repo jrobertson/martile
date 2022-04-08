@@ -197,7 +197,7 @@ class Martile
     s246 = mindwords(s245)
     @to_s = s246.to_s
 
-    s250 = apply_filter(s245) {|x| nomarkdown x }
+    s250 = apply_filter(s246) {|x| nomarkdown x }
     puts 's250 : ' + s250.inspect if @debug
     s252 = sidenav(s250)
     puts 's252 : ' + s252.inspect if @debug
